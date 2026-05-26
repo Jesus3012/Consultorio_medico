@@ -15,6 +15,7 @@ import {
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import WelcomeModal from '../../components/Auth/WelcomeModal';
+import { detectGender } from '../../utils/genderDetector';
 import './Dashboard.css';
 
 const { Title, Text } = Typography;
@@ -56,6 +57,22 @@ const Dashboard: React.FC = () => {
     sucursal_id: user.sucursal_id,
     genero: user.genero
   } : null;
+
+  // Función para obtener el saludo correcto según género
+  const getWelcomeText = () => {
+    if (!user) return '¡Bienvenido!';
+    
+    const nombreCompleto = `${user.nombre} ${user.primer_apellido || ''}`.trim();
+    const gender = user.genero || detectGender(user.nombre, user.primer_apellido);
+    
+    if (gender === 'FEMALE') {
+      return `¡Bienvenida, ${nombreCompleto}!`;
+    } else if (gender === 'MALE') {
+      return `¡Bienvenido, ${nombreCompleto}!`;
+    } else {
+      return `¡Bienvenido(a), ${nombreCompleto}!`;
+    }
+  };
 
   // Estadísticas globales
   const globalStats = [
@@ -121,7 +138,7 @@ const Dashboard: React.FC = () => {
         <div className="welcome-header">
           <div>
             <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
-              ¡Bienvenido, {user?.nombre} {user?.primer_apellido}!
+              {getWelcomeText()}
             </Title>
             <Text type="secondary" style={{ fontSize: isMobile ? 13 : 14 }}>
               Resumen de todos los consultorios a tu cargo
@@ -195,18 +212,24 @@ const Dashboard: React.FC = () => {
         <Row gutter={[16, 16]} className="bottom-row">
           <Col xs={24} lg={12}>
             <Card title="Actividad Reciente" className="activity-card">
-              <List
-                dataSource={recentActivity}
-                renderItem={(item) => (
-                  <List.Item className="activity-list-item">
-                    <List.Item.Meta
-                      avatar={<CheckCircleOutlined style={{ color: '#50EBEC', fontSize: isMobile ? 16 : 20 }} />}
-                      title={<Text strong style={{ fontSize: isMobile ? 13 : 14 }}>{item.action}</Text>}
-                      description={<Text type="secondary" style={{ fontSize: isMobile ? 11 : 12 }}>{item.user} • {item.time}</Text>}
-                    />
-                  </List.Item>
-                )}
-              />
+              <div className="activity-list">
+                {recentActivity.map((item) => (
+                    <div key={item.id} className="activity-list-item">
+                    <div className="activity-item-avatar">
+                        <CheckCircleOutlined style={{ color: '#50EBEC', fontSize: isMobile ? 16 : 20 }} />
+                    </div>
+                    <div className="activity-item-content">
+                        <div className="activity-item-title">
+                        <Text strong style={{ fontSize: isMobile ? 13 : 14 }}>{item.action}</Text>
+                        </div>
+                        <div className="activity-item-description">
+                        <Text type="secondary" style={{ fontSize: isMobile ? 11 : 12 }}>{item.user} • {item.time}</Text>
+                        </div>
+                    </div>
+                    </div>
+                ))}
+                </div>
+    
             </Card>
           </Col>
           
@@ -216,25 +239,25 @@ const Dashboard: React.FC = () => {
                 <Col span={12}>
                   <div className="metric-item">
                     <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>Ocupación</Text>
-                    <Progress percent={78} strokeColor="#50EBEC" size={isMobile ? "small" : "default"} />
+                    <Progress percent={78} strokeColor="#50EBEC" size={isMobile ? "small" : "medium"} />
                   </div>
                 </Col>
                 <Col span={12}>
                   <div className="metric-item">
                     <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>Satisfacción</Text>
-                    <Progress percent={94} strokeColor="#36C6C7" size={isMobile ? "small" : "default"} />
+                    <Progress percent={94} strokeColor="#36C6C7" size={isMobile ? "small" : "medium"} />
                   </div>
                 </Col>
                 <Col span={12}>
                   <div className="metric-item">
                     <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>Citas</Text>
-                    <Progress percent={86} strokeColor="#2BA1A2" size={isMobile ? "small" : "default"} />
+                    <Progress percent={86} strokeColor="#2BA1A2" size={isMobile ? "small" : "medium"} />
                   </div>
                 </Col>
                 <Col span={12}>
                   <div className="metric-item">
                     <Text type="secondary" style={{ fontSize: isMobile ? 12 : 14 }}>Recetas</Text>
-                    <Progress percent={72} strokeColor="#50EBEC" size={isMobile ? "small" : "default"} />
+                    <Progress percent={72} strokeColor="#50EBEC" size={isMobile ? "small" : "medium"} />
                   </div>
                 </Col>
               </Row>

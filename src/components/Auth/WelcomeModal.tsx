@@ -25,7 +25,7 @@ interface UserLocal {
   email: string;
   rol_id: number;
   empresa_id: number;
-  sucursal_id?: number;
+  sucursal_id?: number | null;
   genero?: string;
   [key: string]: any;
 }
@@ -168,10 +168,10 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
           <Progress 
             percent={progress} 
             strokeColor="#50EBEC"
-            trailColor="#E6F7F7"
+            railColor="#E6F7F7"  // ← Cambiar trailColor por railColor
             showInfo={false}
             style={{ width: '80%', marginTop: 16 }}
-          />
+           />
           <Text type="secondary" style={{ marginTop: 16, display: 'block' }}>
             Cargando información del consultorio
           </Text>

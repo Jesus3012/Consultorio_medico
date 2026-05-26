@@ -1,0 +1,25 @@
+/* Modal elegante para PC */
+.elegant-detail-modal .ant-modal-content {
+  border-radius: 24px;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.elegant-detail-modal .ant-modal-close {
+  top: 20px;
+  right: 20px;
+}
+
+/* Drawer para móvil */
+.mobile-details-drawer .ant-drawer-content-wrapper {
+  border-radius: 20px 20px 0 0;
+}
+
+.mobile-details-drawer .ant-drawer-header {
+  border-radius: 20px 20px 0 0;
+  padding: 16px 20px;
+}
+
+.mobile-details-drawer .ant-drawer-body {
+  padding: 20px;
+}

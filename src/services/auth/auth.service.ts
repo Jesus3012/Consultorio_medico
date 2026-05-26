@@ -1,5 +1,6 @@
+// src/services/auth/auth.service.ts
 import axios from 'axios';
-import type { LoginResponse, User } from '../../types/auth';
+import type { LoginResponse, User } from '../../types/auth/auth.types';
 import axiosInstance from '../../api/axios.config';
 import { detectGender } from '../../utils/genderDetector';
 
@@ -35,19 +36,18 @@ class AuthService {
         password
       });
       
-      console.log('Respuesta del login:', JSON.stringify(response.data, null, 2));
+      console.log('📦 Respuesta del login:', JSON.stringify(response.data, null, 2));
       
       if (response.data?.success && response.data?.data) {
         const accessToken = response.data.data.accessToken;
         
         if (accessToken) {
-          // Guardar el token
           localStorage.setItem('access_token', accessToken);
           axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
           
           // Decodificar el token para obtener el userId
           const decodedToken = decodeToken(accessToken);
-          console.log('Token decodificado:', decodedToken);
+          console.log('🔓 Token decodificado:', decodedToken);
           
           const userId = decodedToken?.userId || decodedToken?.sub || decodedToken?.id;
           
@@ -70,46 +70,14 @@ class AuthService {
             }
           }
           
-          // Fallback: crear usuario con datos mínimos
-          const emailName = email.split('@')[0];
-          const nombre = emailName.split(/[._-]/)[0] || 'Usuario';
-          const primerApellido = emailName.split(/[._-]/)[1] || '';
-          const gender = detectGender(nombre, primerApellido);
-          
-          const fallbackUser: User = {
-            id: userId || 0,
-            nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1).toLowerCase(),
-            primer_apellido: primerApellido.charAt(0).toUpperCase() + primerApellido.slice(1).toLowerCase(),
-            segundo_apellido: '',
-            email: email,
-            telefono: '',
-            rol_id: decodedToken?.rolId || 1,
-            empresa_id: decodedToken?.empresaId || 1,
-            sucursal_id: null,
-            cedula_profesional: '',
-            especialidad: '',
-            activo: true,
-            genero: gender
-          };
-          
-          localStorage.setItem('user', JSON.stringify(fallbackUser));
-          this.startRefreshTokenTimer();
-          
-          return {
-            success: true,
-            data: {
-              user: fallbackUser,
-              token: accessToken,
-              refreshToken: undefined
-            }
-          };
+          throw new Error('No se pudo obtener la información del usuario');
         }
       }
       
       throw new Error('No se encontraron datos de usuario en la respuesta');
       
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
       
       if (error.response) {
         throw {
@@ -134,39 +102,35 @@ class AuthService {
         }
       });
       
-      console.log(` Respuesta de /usuarios/${userId}:`, JSON.stringify(response.data, null, 2));
+      console.log(`📋 Respuesta de /usuarios/${userId}:`, JSON.stringify(response.data, null, 2));
       
-      // Buscar el usuario en diferentes estructuras posibles
-      let userData = null;
+      // La API devuelve: { success, statusCode, message, data: { ... } }
+      const userData = response.data?.data;
       
-      if (response.data?.data?.user) {
-        userData = response.data.data.user;
-      } else if (response.data?.user) {
-        userData = response.data.user;
-      } else if (response.data?.data) {
-        userData = response.data.data;
-      } else if (response.data?.id || response.data?.correo) {
-        userData = response.data;
-      }
-      
-      if (userData && (userData.id || userData.correo || userData.email)) {
-        console.log('Usuario encontrado por ID:', userData);
+      if (userData) {
+        console.log('✅ Usuario encontrado por ID:', userData);
         
-        const gender = detectGender(userData.nombre || '', userData.primer_apellido || '');
+        // Mapear los campos de la API a nuestros campos
+        // API usa: primerApellido, segundoApellido, correo, cedulaProfesional
+        // Nosotros usamos: primer_apellido, segundo_apellido, email, cedula_profesional
+        const gender = detectGender(userData.nombre, userData.primerApellido);
         
         return {
-          id: userData.id || userId,
+          id: userData.id,
           nombre: userData.nombre || '',
-          primer_apellido: userData.primer_apellido || '',
-          segundo_apellido: userData.segundo_apellido || '',
-          email: userData.correo || userData.email,
+          primer_apellido: userData.primerApellido || '',
+          segundo_apellido: userData.segundoApellido || '',
+          email: userData.correo || '',
           telefono: userData.telefono || '',
-          rol_id: userData.rol_id || 1,
-          empresa_id: userData.empresa_id || 1,
-          sucursal_id: userData.sucursal_id || null,
-          cedula_profesional: userData.cedula_profesional || '',
+          rol_id: userData.rolId || 1,
+          empresa_id: userData.empresaId || 1,
+          sucursal_id: userData.sucursalId || null,
+          cedula_profesional: userData.cedulaProfesional || '',
           especialidad: userData.especialidad || '',
-          activo: userData.activo === 1,
+          activo: userData.activo === true,
+          ultimo_acceso: userData.ultimoAcceso || undefined,
+          created_at: userData.createdAt,
+          updated_at: userData.updatedAt,
           genero: gender
         };
       }

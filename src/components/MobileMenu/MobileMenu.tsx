@@ -34,12 +34,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ open, onClose, onMenuClick }) =
 
   return (
     <Drawer
-      placement="left"
-      open={open}
-      onClose={onClose}
-      width={280}
-      closable={true}
-      className="mobile-drawer-custom"
+        placement="left"
+        open={open}
+        onClose={onClose}
+        size="default"  // width es reemplazado por size
+        closable={true}
     >
       <div className="mobile-drawer-header">
         <HeartOutlined className="mobile-drawer-logo" />

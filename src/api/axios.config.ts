@@ -17,7 +17,6 @@ axiosInstance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    console.log(`📤 ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     return config;
   },
   (error) => {
@@ -29,7 +28,6 @@ axiosInstance.interceptors.request.use(
 // Response interceptor para manejar errores
 axiosInstance.interceptors.response.use(
   (response) => {
-    console.log(`✅ Response: ${response.status} ${response.config.url}`);
     return response;
   },
   async (error) => {

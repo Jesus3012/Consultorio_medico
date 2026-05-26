@@ -1,0 +1,139 @@
+/* src/pages/Clinicas/Clinicas.css */
+.clinicas-container {
+  padding: 0;
+}
+
+/* Estilos para móvil */
+@media (max-width: 768px) {
+  .clinicas-card .ant-card-head {
+    padding: 0 16px;
+  }
+  
+  .clinicas-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  /* Tarjeta de consultorio en móvil */
+  .clinica-card-mobile {
+    border-radius: 16px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .clinica-card-mobile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(80, 235, 236, 0.15);
+  }
+  
+  .clinica-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .clinica-card-title {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1a202c;
+  }
+  
+  .clinica-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4a5568;
+  }
+  
+  .info-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e2e8f0;
+  }
+  
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+    color: #718096;
+  }
+  
+  .stat-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2BA1A2;
+  }
+  
+  /* Drawer móvil */
+  .clinica-drawer .ant-drawer-content-wrapper {
+    border-radius: 20px 20px 0 0;
+  }
+  
+  .clinica-drawer .ant-drawer-header {
+    border-bottom: 1px solid #e2e8f0;
+    padding: 16px;
+  }
+  
+  .clinica-drawer .ant-drawer-body {
+    padding: 20px 16px;
+  }
+  
+  .drawer-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  
+  /* Detalles del consultorio */
+  .clinica-details {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .detail-label {
+    font-size: 12px;
+    color: #718096;
+  }
+  
+  .detail-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a202c;
+  }
+  
+  .detail-row {
+    display: flex;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .detail-col {
+    flex: 1;
+  }
+  
+  .detail-actions {
+    margin-top: 8px;
+  }
+}

@@ -7,7 +7,8 @@ import PublicLayout from '../layouts/PublicLayout/PublicLayout';
 import PrivateLayout from '../layouts/PrivateLayout/PrivateLayout';
 import Login from '../pages/Auth/Login';
 import Dashboard from '../pages/Dashboard/Dashboard';
-import Clinicas from '../pages/Clinicas/Clinicas';
+import Clinicas from '../pages/clinicas/Clinicas';
+import Usuarios from '../pages/Usuarios/Usuarios';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -41,6 +42,7 @@ const AppRouter: React.FC = () => {
             
             <Route element={<PrivateLayout />}>
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/usuarios" element={<Usuarios />} />
               <Route path="/clinicas" element={<ProtectedRoute><Clinicas /></ProtectedRoute>} />
               <Route path="/clinicas/nueva" element={<ProtectedRoute><Clinicas /></ProtectedRoute>} />
               <Route path="/clinicas/:id" element={<ProtectedRoute><Clinicas /></ProtectedRoute>} />

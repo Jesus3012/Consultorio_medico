@@ -25,6 +25,7 @@ import {
   HeartOutlined,
   PoweroffOutlined,
   MenuOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
@@ -44,6 +45,7 @@ const PrivateLayout: React.FC = () => {
 
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
+    { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuarios' },
     { key: '/clinicas', icon: <ShopOutlined />, label: 'Consultorios' },
     { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
     { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
