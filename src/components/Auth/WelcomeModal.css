@@ -1,0 +1,254 @@
+.welcome-modal .ant-modal-content {
+  border-radius: 24px;
+  overflow: hidden;
+  padding: 0;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.welcome-loading {
+  text-align: center;
+  padding: 60px 40px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-spinner {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+.welcome-content {
+  padding: 40px 32px 32px;
+  position: relative;
+}
+
+.welcome-header {
+  text-align: center;
+  position: relative;
+}
+
+.welcome-decoration {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.decoration-circle {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(80, 235, 236, 0.1);
+  animation: float 6s ease-in-out infinite;
+}
+
+.circle-1 {
+  width: 150px;
+  height: 150px;
+  top: -75px;
+  right: -75px;
+  animation-delay: 0s;
+}
+
+.circle-2 {
+  width: 100px;
+  height: 100px;
+  bottom: -50px;
+  left: -50px;
+  animation-delay: 1s;
+}
+
+.circle-3 {
+  width: 80px;
+  height: 80px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation-delay: 2s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-20px) scale(1.05);
+  }
+}
+
+.welcome-avatar-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.welcome-avatar {
+  transition: transform 0.3s ease;
+}
+
+.welcome-avatar:hover {
+  transform: scale(1.05);
+}
+
+.welcome-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #ffd700;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.welcome-badge .anticon {
+  font-size: 14px;
+  color: white;
+}
+
+.welcome-greeting {
+  margin: 0 0 8px 0 !important;
+  background: linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.welcome-name {
+  margin: 0 0 8px 0 !important;
+  color: #1a202c;
+  font-weight: 600;
+}
+
+.welcome-role {
+  display: inline-block;
+  padding: 4px 16px;
+  background: rgba(80, 235, 236, 0.1);
+  border-radius: 20px;
+  color: #36C6C7;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.welcome-divider {
+  margin: 24px 0;
+  border-top-color: #e5e7eb;
+}
+
+.welcome-stats {
+  margin-bottom: 24px;
+}
+
+.stat-card-mini {
+  text-align: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.stat-card-mini:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(80, 235, 236, 0.15);
+  background: white;
+}
+
+.stat-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #1a202c;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.welcome-message {
+  background: rgba(80, 235, 236, 0.05);
+  padding: 16px;
+  border-radius: 16px;
+  text-align: center;
+  margin-bottom: 24px;
+  border: 1px solid rgba(80, 235, 236, 0.1);
+}
+
+.welcome-button {
+  height: 48px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  background: linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(80, 235, 236, 0.3);
+  transition: all 0.3s ease;
+}
+
+.welcome-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(80, 235, 236, 0.4);
+  background: linear-gradient(135deg, #5ff0f1 0%, #40d0d1 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .welcome-content {
+    padding: 32px 20px 24px;
+  }
+  
+  .welcome-name {
+    font-size: 20px;
+  }
+  
+  .welcome-greeting {
+    font-size: 24px;
+  }
+  
+  .stat-card-mini {
+    padding: 8px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+  }
+}

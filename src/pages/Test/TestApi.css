@@ -1,0 +1,27 @@
+.test-api-container {
+  padding: 24px;
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.api-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.api-status {
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}

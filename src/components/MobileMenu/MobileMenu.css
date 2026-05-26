@@ -1,0 +1,78 @@
+/* src/components/MobileMenu/MobileMenu.css */
+
+/* Fondo celeste igual que sidebar PC */
+.mobile-drawer-custom .ant-drawer-content {
+  background: linear-gradient(180deg, #1E3A5F 0%, #2B5B8B 100%) !important;
+}
+
+.mobile-drawer-custom .ant-drawer-header {
+  display: none !important;
+}
+
+.mobile-drawer-custom .ant-drawer-body {
+  padding: 0 !important;
+}
+
+.mobile-drawer-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(80, 235, 236, 0.2);
+  margin-bottom: 16px;
+}
+
+.mobile-drawer-logo {
+  font-size: 28px;
+  color: #50EBEC;
+}
+
+.mobile-drawer-title {
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #50EBEC 0%, #2BA1A2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.mobile-drawer-menu {
+  background: transparent !important;
+  border-right: none !important;
+}
+
+.mobile-drawer-menu .ant-menu-item {
+  border-radius: 10px !important;
+  margin: 4px 12px !important;
+  height: 44px !important;
+  line-height: 44px !important;
+  color: #000000 !important;  /* LETRAS NEGRAS */
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+.mobile-drawer-menu .ant-menu-item .anticon {
+  font-size: 18px !important;
+  margin-right: 12px !important;
+  color: #000000 !important;  /* ICONOS NEGROS */
+}
+
+.mobile-drawer-menu .ant-menu-item:hover {
+  background: rgba(80, 235, 236, 0.3) !important;
+  color: #000000 !important;
+}
+
+.mobile-drawer-menu .ant-menu-item:hover .anticon {
+  color: #000000 !important;
+}
+
+.mobile-drawer-menu .ant-menu-item-selected {
+  background: linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%) !important;
+  color: #000000 !important;
+  font-weight: 600 !important;
+}
+
+.mobile-drawer-menu .ant-menu-item-selected .anticon {
+  color: #000000 !important;
+}

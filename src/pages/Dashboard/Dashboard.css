@@ -1,0 +1,219 @@
+/* Dashboard Modern */
+.dashboard-modern {
+  padding: 0;
+}
+
+/* Welcome Header */
+.welcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.add-clinic-btn {
+  background: linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%);
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.add-clinic-btn:hover {
+  background: linear-gradient(135deg, #6ff3f4 0%, #40d0d1 100%);
+  transform: translateY(-2px);
+}
+
+/* Stats Cards */
+.stat-card-modern {
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.stat-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(80, 235, 236, 0.15);
+}
+
+.stat-card-modern .ant-card-body {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.stat-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-title {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  margin: 0 !important;
+  line-height: 1.2 !important;
+}
+
+.stat-trend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Clinics Table Card */
+.clinics-table-card {
+  margin-top: 24px;
+  border-radius: 20px;
+}
+
+.clinics-table-card .ant-card-head {
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Activity & Metrics Cards */
+.activity-card,
+.metrics-card {
+  border-radius: 20px;
+  height: 100%;
+}
+
+.activity-list-item {
+  padding: 12px 0 !important;
+}
+
+.activity-list-item:last-child {
+  border-bottom: none !important;
+}
+
+.metric-item {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.metric-item:hover {
+  background: #f0f2f5;
+}
+
+/* Bottom Row */
+.bottom-row {
+  margin-top: 24px;
+}
+
+/* ============================================
+   RESPONSIVE - MÓVIL
+   ============================================ */
+@media (max-width: 768px) {
+  .welcome-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .welcome-header .ant-typography {
+    font-size: 20px !important;
+  }
+  
+  .stat-card-modern .ant-card-body {
+    padding: 12px;
+    gap: 10px;
+  }
+  
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .stat-title {
+    font-size: 11px;
+  }
+  
+  .stat-value {
+    font-size: 18px !important;
+  }
+  
+  .clinics-table-card {
+    margin-top: 16px;
+  }
+  
+  .clinics-table-card .ant-card-head {
+    padding: 0 12px;
+  }
+  
+  .clinics-table-card .ant-card-body {
+    padding: 12px;
+  }
+  
+  .activity-card .ant-card-body,
+  .metrics-card .ant-card-body {
+    padding: 16px;
+  }
+  
+  .metric-item {
+    padding: 12px;
+  }
+  
+  /* Touch friendly */
+  button,
+  .ant-btn,
+  .ant-table-cell button {
+    min-height: 40px;
+  }
+  
+  .ant-card {
+    border-radius: 16px !important;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - TABLET
+   ============================================ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+  }
+  
+  .stat-value {
+    font-size: 22px !important;
+  }
+  
+  .stat-title {
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - DESKTOP GRANDE
+   ============================================ */
+@media (min-width: 1440px) {
+  .dashboard-modern {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
