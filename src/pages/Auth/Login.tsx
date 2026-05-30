@@ -1,171 +1,218 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Form, Input, Button, Card, Typography, Row, Col, Space, App, Divider, Grid } from 'antd';
-import { 
-  UserOutlined, 
-  LockOutlined, 
-  LoginOutlined, 
-  MobileOutlined, 
-  HeartOutlined
+import { Form, Input, Button, Typography, App, Checkbox } from 'antd';
+import {
+  UserOutlined,
+  LockOutlined,
+  LoginOutlined,
+  EyeInvisibleOutlined,
+  EyeTwoTone,
 } from '@ant-design/icons';
 import { useAuth } from '../../hooks/useAuth';
-import { detectGender, getWelcomeMessage } from '../../utils/genderDetector';
 import './Login.css';
 
 const { Title, Text } = Typography;
-const { useBreakpoint } = Grid;
 
 interface LoginFormValues {
   email: string;
   password: string;
+  remember?: boolean;
 }
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  const [form] = Form.useForm<LoginFormValues>();
   const { login } = useAuth();
   const navigate = useNavigate();
   const { message } = App.useApp();
-  const screens = useBreakpoint();
-  
-  const isMobile = !screens.md;
+
+  useEffect(() => {
+    const remembered = localStorage.getItem('remember_me') === 'true';
+    const savedEmail = localStorage.getItem('remembered_email');
+
+    if (remembered && savedEmail) {
+      form.setFieldsValue({
+        email: savedEmail,
+        remember: true,
+      });
+    }
+  }, [form]);
+
+  const getErrorMessage = (error: any) => {
+    const statusCode = error?.response?.status;
+    const backendMessage = String(error?.response?.data?.message || '').toLowerCase();
+
+    if (statusCode === 404 || backendMessage.includes('no registrado')) {
+      return 'El correo electrónico no está registrado';
+    }
+
+    if (
+      statusCode === 401 ||
+      backendMessage.includes('contraseña') ||
+      backendMessage.includes('password') ||
+      backendMessage.includes('credenciales')
+    ) {
+      // return 'La contraseña es incorrecta';
+      return 'Datos de acceso incorrectos. Verifica tu correo y contraseña';
+    }
+
+    if (error?.message?.toLowerCase().includes('network')) {
+      return 'Error de conexión. Verifica tu internet';
+    }
+
+    return 'No fue posible iniciar sesión. Intente nuevamente';
+  };
 
   const onFinish = async (values: LoginFormValues) => {
     setLoading(true);
+
     try {
       await login(values.email, values.password);
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      // Detectar género correctamente
-      const gender = user.genero || detectGender(user.nombre, user.primer_apellido);
-      
-      // Mensaje personalizado según género
-      let welcomeText = '';
-      if (gender === 'FEMALE') {
-        welcomeText = `¡Bienvenida, ${user.nombre} ${user.primer_apellido}!`;
-      } else if (gender === 'MALE') {
-        welcomeText = `¡Bienvenido, ${user.nombre} ${user.primer_apellido}!`;
+
+      if (values.remember) {
+        localStorage.setItem('remember_me', 'true');
+        localStorage.setItem('remembered_email', values.email);
       } else {
-        welcomeText = `¡Bienvenido(a), ${user.nombre} ${user.primer_apellido}!`;
+        localStorage.removeItem('remember_me');
+        localStorage.removeItem('remembered_email');
       }
-      
+
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+
       message.success({
-        content: welcomeText,
-        icon: <HeartOutlined />,
-        duration: 4,
-        style: { marginTop: '20px' }
+        content: user?.nombre
+          ? `Bienvenido, ${user.nombre} ${user.primer_apellido || ''}`
+          : 'Bienvenido al sistema',
+        duration: 3,
       });
-      
+
       navigate('/dashboard');
     } catch (error: any) {
-      message.error(error.response?.data?.message || 'Credenciales incorrectas');
+      message.error({
+        content: getErrorMessage(error),
+        duration: 4,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <Row 
-        justify="center" 
-        align="middle" 
-        style={{ minHeight: '100vh', position: 'relative', zIndex: 2 }}
-      >
-        <Col xs={22} sm={20} md={14} lg={12} xl={10}>
-          <div className="login-card-wrapper">
-            <Card
-              className="login-card"
-              styles={{ body: { padding: isMobile ? 32 : 48 } }}
-            >
-              <Space direction="vertical" size={isMobile ? "middle" : "large"} style={{ width: '100%' }}>
-                {/* Logo y título */}
-                <div className="login-header">
-                  <div className="logo-wrapper">
-                    <div className="logo-icon pulse-animation">
-                      <LoginOutlined />
-                    </div>
-                  </div>
-                  <Title level={isMobile ? 3 : 2} className="login-title">
-                    Consultorio Médico
-                  </Title>
-                  <Text type="secondary" className="login-subtitle">
-                    Sistema Integral de Gestión Médica
-                  </Text>
-                </div>
+    <div className="login-page">
+      <div className="login-left">
+        <div className="circle-top" />
 
-                <Divider className="login-divider">
-                  <span className="divider-text">Acceso al Sistema</span>
-                </Divider>
-
-                {/* Formulario */}
-                <Form
-                  name="login"
-                  onFinish={onFinish}
-                  layout="vertical"
-                  size="large"
-                  className="login-form"
-                >
-                  <Form.Item
-                    name="email"
-                    label="Correo electrónico"
-                    rules={[
-                      { required: true, message: 'Por favor ingrese su email' },
-                      { type: 'email', message: 'Email inválido' }
-                    ]}
-                  >
-                    <Input 
-                      prefix={<UserOutlined className="input-icon" />} 
-                      placeholder="ejemplo@correo.com" 
-                      autoComplete="email"
-                      className="login-input"
-                      size="large"
-                    />
-                  </Form.Item>
-
-                  <Form.Item
-                    name="password"
-                    label="Contraseña"
-                    rules={[{ required: true, message: 'Por favor ingrese su contraseña' }]}
-                  >
-                    <Input.Password
-                      prefix={<LockOutlined className="input-icon" />}
-                      placeholder="••••••••"
-                      autoComplete="current-password"
-                      className="login-input"
-                      size="large"
-                    />
-                  </Form.Item>
-
-                  <Form.Item>
-                    <Button 
-                      type="primary" 
-                      htmlType="submit" 
-                      loading={loading}
-                      block
-                      className="login-button"
-                      size="large"
-                    >
-                      Iniciar Sesión
-                    </Button>
-                  </Form.Item>
-                </Form>
-
-                {isMobile && (
-                  <div className="mobile-version">
-                    <MobileOutlined />
-                    <Text type="secondary">Versión Móvil</Text>
-                  </div>
-                )}
-              </Space>
-            </Card>
-            
-            <div className="login-footer">
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                © 2024 Consultorio Médico - Todos los derechos reservados
-              </Text>
-            </div>
+        <div className="brand-content">
+          <div className="brand-icon">
+            <LoginOutlined />
           </div>
-        </Col>
-      </Row>
+
+          <Title className="brand-title">
+            Consultorio Médico
+          </Title>
+
+          <Text className="brand-subtitle">
+            Sistema Integral de Gestión Médica
+          </Text>
+        </div>
+
+        <div className="medical-image" />
+        <div className="circle-bottom" />
+        <div className="dots" />
+      </div>
+
+      <div className="login-right">
+        <div className="form-wrapper">
+          <div className="form-header">
+            <Title level={2} className="form-title">
+              Acceso al sistema
+            </Title>
+
+            <Text className="form-subtitle">
+              Ingresa tus credenciales para continuar
+            </Text>
+          </div>
+
+          <Form
+            form={form}
+            name="login"
+            layout="vertical"
+            onFinish={onFinish}
+            className="login-form"
+            initialValues={{ remember: false }}
+          >
+            <Form.Item
+              name="email"
+              label="Correo electrónico"
+              rules={[
+                { required: true, message: 'Por favor ingrese su correo' },
+                { type: 'email', message: 'Ingrese un correo válido' },
+              ]}
+            >
+              <Input
+                prefix={<UserOutlined />}
+                placeholder="ejemplo@correo.com"
+                autoComplete="email"
+                className="login-input"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="password"
+              label="Contraseña"
+              rules={[
+                { required: true, message: 'Por favor ingrese su contraseña' },
+                { min: 6, message: 'La contraseña debe tener al menos 6 caracteres' },
+              ]}
+            >
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="Ingresa tu contraseña"
+                autoComplete="current-password"
+                className="login-input"
+                size="large"
+                iconRender={(visible) =>
+                  visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+                }
+              />
+            </Form.Item>
+
+            <div className="login-options">
+              <Form.Item name="remember" valuePropName="checked" noStyle>
+                <Checkbox className="remember-checkbox">
+                  Recordarme
+                </Checkbox>
+              </Form.Item>
+
+              <a
+                href="#"
+                className="forgot-link"
+                onClick={(e) => e.preventDefault()}
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
+
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={loading}
+              block
+              className="login-button"
+              size="large"
+            >
+              Ingresar <LoginOutlined />
+            </Button>
+          </Form>
+
+          <div className="version">
+            <span></span>
+            <p>Versión 1.0.0</p>
+            <span></span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
