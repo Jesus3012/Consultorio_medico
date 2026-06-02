@@ -14,6 +14,7 @@ import {
   Tooltip,
   Grid,
   Drawer,
+  Select,
 } from 'antd';
 import {
   PlusOutlined,
@@ -28,35 +29,83 @@ import {
   MailOutlined,
   PhoneOutlined,
   CheckCircleOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import userService, { type UserData } from '../../services/user/user.service';
+import axiosInstance from '../../api/axios.config';
+import { useAuth } from '../../hooks/useAuth';
 import { App } from 'antd';
 import './Usuarios.css';
 
 const { useBreakpoint } = Grid;
 const { Text } = Typography;
 
+interface SucursalOption {
+  id: number;
+  empresaId: number;
+  nombre: string;
+}
+
 const Usuarios: React.FC = () => {
-  const { message, modal } = App.useApp(); 
+  const { user } = useAuth();
+  const { message, modal } = App.useApp();
+
   const [users, setUsers] = useState<UserData[]>([]);
+  const [sucursales, setSucursales] = useState<SucursalOption[]>([]);
   const [loading, setLoading] = useState(false);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
+
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const [searchText, setSearchText] = useState('');
+
   const [form] = Form.useForm();
   const [passwordForm] = Form.useForm();
+
   const screens = useBreakpoint();
   const isMobile = !screens.md;
+  const rolSeleccionado = Form.useWatch('rol_id', form);
 
-  // Cargar usuarios
+  const getRolName = (rolId?: number) => {
+    switch (rolId) {
+      case 1:
+        return 'Administrador';
+      case 2:
+        return 'Médico';
+      case 3:
+        return 'Consultor';
+      default:
+        return 'Usuario';
+    }
+  };
+
+  const getRolColor = (rolId?: number) => {
+    switch (rolId) {
+      case 1:
+        return 'gold';
+      case 2:
+        return 'blue';
+      case 3:
+        return 'green';
+      default:
+        return 'default';
+    }
+  };
+
+  const getSucursalName = (sucursalId?: number | null) => {
+    if (!sucursalId) return '-';
+    return sucursales.find((s) => s.id === sucursalId)?.nombre || '-';
+  };
+
   const fetchUsers = async () => {
     setLoading(true);
+
     try {
       const data = await userService.getUsuarios(1, 100);
       setUsers(data);
@@ -67,20 +116,47 @@ const Usuarios: React.FC = () => {
     }
   };
 
+  const fetchSucursales = async () => {
+    try {
+      const response = await axiosInstance.get('/sucursales', {
+        params: {
+          page: 1,
+          limit: 100,
+        },
+      });
+
+      const data = response.data?.data?.data || [];
+      const empresaId = user?.empresa_id;
+
+      const filtered = empresaId
+        ? data.filter((item: any) => item.empresaId === empresaId)
+        : data;
+
+      setSucursales(filtered);
+    } catch (error) {
+      console.error('ERROR SUCURSALES:', error);
+      message.error('No fue posible cargar los consultorios');
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
-  }, []);
+    fetchSucursales();
+  }, [user?.empresa_id]);
 
-  // Mostrar modal de confirmación para eliminar
-  const showDeleteConfirm = (user: UserData) => {
+  const showDeleteConfirm = (usuario: UserData) => {
     modal.confirm({
       title: 'Eliminar Usuario',
       icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
       content: (
         <div>
           <p>¿Estás seguro de que deseas eliminar este usuario?</p>
-          <p><strong>Usuario:</strong> {user.nombre} {user.primer_apellido}</p>
-          <p><strong>Email:</strong> {user.email}</p>
+          <p>
+            <strong>Usuario:</strong> {usuario.nombre} {usuario.primer_apellido}
+          </p>
+          <p>
+            <strong>Email:</strong> {usuario.email}
+          </p>
           <Text type="danger">Esta acción no se puede deshacer.</Text>
         </div>
       ),
@@ -89,7 +165,7 @@ const Usuarios: React.FC = () => {
       cancelText: 'Cancelar',
       onOk: async () => {
         try {
-          await userService.deleteUsuario(user.id!);
+          await userService.deleteUsuario(usuario.id!);
           message.success('Usuario eliminado exitosamente');
           fetchUsers();
         } catch (error) {
@@ -102,25 +178,34 @@ const Usuarios: React.FC = () => {
   const handleCreate = () => {
     setEditingUser(null);
     form.resetFields();
-    form.setFieldsValue({ rol_id: 2 });
-    setModalVisible(true);
-  };
 
-  const handleEdit = (user: UserData) => {
-    setEditingUser(user);
     form.setFieldsValue({
-      nombre: user.nombre,
-      primer_apellido: user.primer_apellido,
-      segundo_apellido: user.segundo_apellido,
-      email: user.email,
-      telefono: user.telefono,
-      rol_id: user.rol_id,
+      rol_id: 2,
+      sucursal_id: undefined,
     });
+
     setModalVisible(true);
   };
 
-  const handleViewDetails = (user: UserData) => {
-    setSelectedUser(user);
+  const handleEdit = (usuario: UserData) => {
+    setEditingUser(usuario);
+
+    form.setFieldsValue({
+      nombre: usuario.nombre,
+      primer_apellido: usuario.primer_apellido,
+      segundo_apellido: usuario.segundo_apellido,
+      email: usuario.email,
+      telefono: usuario.telefono,
+      rol_id: usuario.rol_id,
+      sucursal_id: usuario.sucursal_id || undefined,
+    });
+
+    setModalVisible(true);
+  };
+
+  const handleViewDetails = (usuario: UserData) => {
+    setSelectedUser(usuario);
+
     if (isMobile) {
       setDetailDrawerVisible(true);
     } else {
@@ -131,12 +216,14 @@ const Usuarios: React.FC = () => {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      
+
       const submitData = {
         ...values,
         telefono: values.telefono || '',
+        empresa_id: user?.empresa_id,
+        sucursal_id: values.rol_id === 1 ? null : values.sucursal_id,
       };
-      
+
       if (editingUser) {
         await userService.updateUsuario(editingUser.id!, submitData);
         message.success('Usuario actualizado exitosamente');
@@ -144,14 +231,12 @@ const Usuarios: React.FC = () => {
         await userService.createUsuario(submitData);
         message.success('Usuario creado exitosamente');
       }
+
       setModalVisible(false);
+      form.resetFields();
       fetchUsers();
     } catch (error: any) {
-      if (error.message) {
-        message.error(error.message);
-      } else {
-        message.error('Error al guardar usuario');
-      }
+      message.error(error?.message || 'Error al guardar usuario');
     }
   };
 
@@ -164,14 +249,17 @@ const Usuarios: React.FC = () => {
   const handleChangePassword = async () => {
     try {
       const values = await passwordForm.validateFields();
+
       if (values.newPassword !== values.confirmPassword) {
         message.error('Las contraseñas no coinciden');
         return;
       }
+
       await userService.changePassword(selectedUserId!, {
-        currentPassword: values.currentPassword,
+        password: values.newPassword,
         newPassword: values.newPassword,
       });
+
       message.success('Contraseña actualizada exitosamente');
       setPasswordModalVisible(false);
     } catch (error) {
@@ -179,214 +267,332 @@ const Usuarios: React.FC = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.nombre?.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.primer_apellido?.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filteredUsers = users.filter((usuario) => {
+    const fullText = `${usuario.nombre || ''} ${usuario.primer_apellido || ''} ${usuario.email || ''}`.toLowerCase();
+    return fullText.includes(searchText.toLowerCase());
+  });
 
-  const columns: ColumnsType<UserData> = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-    {
-      title: 'Usuario',
-      key: 'nombre',
-      width: 200,
-      render: (_, record) => (
-        <Space>
-          <Avatar icon={<UserOutlined />} style={{ backgroundColor: '#50EBEC' }} />
-          <span>{record.nombre} {record.primer_apellido}</span>
-        </Space>
-      ),
-    },
-    { title: 'Email', dataIndex: 'email', key: 'email', ellipsis: true },
-    { title: 'Teléfono', dataIndex: 'telefono', key: 'telefono', responsive: ['md'] as any },
-    {
-      title: 'Rol',
-      dataIndex: 'rol_id',
-      key: 'rol_id',
-      width: 120,
-      render: (rol_id) => (
-        <Tag color={rol_id === 1 ? 'gold' : 'blue'}>
-          {rol_id === 1 ? 'Administrador' : 'Médico'}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Estado',
-      dataIndex: 'activo',
-      key: 'activo',
-      width: 100,
-      render: (activo) => (
-        <Tag color={activo ? 'green' : 'red'}>{activo ? 'Activo' : 'Inactivo'}</Tag>
-      ),
-    },
-    {
-      title: 'Acciones',
-      key: 'actions',
-      width: 220,
-      render: (_, record) => (
-        <Space size="small">
-          <Tooltip title="Ver detalles">
-            <Button type="link" icon={<EyeOutlined />} onClick={() => handleViewDetails(record)} />
-          </Tooltip>
-          <Tooltip title="Editar">
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          </Tooltip>
-          <Tooltip title="Cambiar contraseña">
-            <Button type="link" icon={<LockOutlined />} onClick={() => handleOpenPasswordModal(record.id!)} />
-          </Tooltip>
-          <Tooltip title="Eliminar">
-            <Button 
-              type="link" 
-              danger 
-              icon={<DeleteOutlined />} 
-              onClick={() => showDeleteConfirm(record)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ];
+const columns: ColumnsType<UserData> = [
+  {
+    title: 'ID',
+    dataIndex: 'id',
+    key: 'id',
+    width: 60,
+    align: 'center',
+  },
+  {
+    title: 'Usuario',
+    key: 'nombre',
+    render: (_, record) => (
+      <Space>
+        <Avatar icon={<UserOutlined />} className="user-avatar" />
+        <span>
+          {record.nombre} {record.primer_apellido}
+        </span>
+      </Space>
+    ),
+  },
+  {
+    title: 'Email',
+    dataIndex: 'email',
+    key: 'email',
+    ellipsis: true,
+  },
+  {
+    title: 'Consultorio',
+    dataIndex: 'sucursal_id',
+    key: 'sucursal_id',
+    ellipsis: true,
+    render: (sucursalId, record) =>
+      record.rol_id === 1 ? '-' : getSucursalName(sucursalId),
+  },
+  {
+    title: 'Teléfono',
+    dataIndex: 'telefono',
+    key: 'telefono',
+    width: 120,
+    align: 'center',
+    responsive: ['xl'],
+    render: (telefono) => (
+      <span className="telefono-nowrap">
+        {telefono || '-'}
+      </span>
+    ),
+  },
+  {
+    title: 'Rol',
+    dataIndex: 'rol_id',
+    key: 'rol_id',
+    width: 120,
+    align: 'center',
+    render: (rolId) => (
+      <Tag className="rol-tag" color={getRolColor(rolId)}>
+        {getRolName(rolId)}
+      </Tag>
+    ),
+  },
+  {
+    title: 'Estado',
+    dataIndex: 'activo',
+    key: 'activo',
+    width: 100,
+    align: 'center',
+    render: (activo) => (
+      <Tag color={activo ? 'green' : 'red'}>
+        {activo ? 'Activo' : 'Inactivo'}
+      </Tag>
+    ),
+  },
+  {
+    title: 'Acciones',
+    key: 'actions',
+    width: 220,
+    align: 'center',
+    render: (_, record) => (
+      <Space size="small">
+        <Tooltip title="Ver detalles">
+          <Button
+            type="link"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetails(record)}
+          />
+        </Tooltip>
+
+        <Tooltip title="Editar">
+          <Button
+            type="link"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          />
+        </Tooltip>
+
+        <Tooltip title="Contraseña">
+          <Button
+            type="link"
+            icon={<LockOutlined />}
+            onClick={() => handleOpenPasswordModal(record.id!)}
+          />
+        </Tooltip>
+
+        <Tooltip title="Eliminar">
+          <Button
+            type="link"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => showDeleteConfirm(record)}
+          />
+        </Tooltip>
+      </Space>
+    ),
+  },
+];
+
+  const UserDetailContent = () => {
+    if (!selectedUser) return null;
+
+    return (
+      <div>
+        <div className="user-detail-header">
+          <Avatar size={80} icon={<UserOutlined />} className="user-detail-avatar" />
+
+          <h2>
+            {selectedUser.nombre} {selectedUser.primer_apellido}
+          </h2>
+
+          <Tag color={getRolColor(selectedUser.rol_id)} className="user-role-tag">
+            {getRolName(selectedUser.rol_id)}
+          </Tag>
+        </div>
+
+        <div className="user-detail-card">
+          <div className="user-detail-row">
+            <MailOutlined />
+            <div>
+              <div className="detail-label">Correo electrónico</div>
+              <div className="detail-value">{selectedUser.email}</div>
+            </div>
+          </div>
+
+          <div className="user-detail-row">
+            <PhoneOutlined />
+            <div>
+              <div className="detail-label">Teléfono</div>
+              <div className="detail-value">{selectedUser.telefono || 'No registrado'}</div>
+            </div>
+          </div>
+
+          {selectedUser.rol_id !== 1 && (
+            <div className="user-detail-row">
+              <ShopOutlined />
+              <div>
+                <div className="detail-label">Consultorio</div>
+                <div className="detail-value">{getSucursalName(selectedUser.sucursal_id)}</div>
+              </div>
+            </div>
+          )}
+
+          <div className="user-detail-row">
+            <CheckCircleOutlined />
+            <div>
+              <div className="detail-label">Estado</div>
+              <Tag color={selectedUser.activo ? 'success' : 'error'} style={{ margin: 0 }}>
+                {selectedUser.activo ? 'Activo' : 'Inactivo'}
+              </Tag>
+            </div>
+          </div>
+        </div>
+
+        <div className="user-detail-actions">
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setDetailModalVisible(false);
+              setDetailDrawerVisible(false);
+              handleEdit(selectedUser);
+            }}
+            block
+          >
+            Editar Usuario
+          </Button>
+
+          <Button
+            icon={<LockOutlined />}
+            onClick={() => {
+              setDetailModalVisible(false);
+              setDetailDrawerVisible(false);
+              handleOpenPasswordModal(selectedUser.id!);
+            }}
+            block
+          >
+            Contraseña
+          </Button>
+
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              setDetailModalVisible(false);
+              setDetailDrawerVisible(false);
+              showDeleteConfirm(selectedUser);
+            }}
+            block
+          >
+            Eliminar
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div style={{ padding: isMobile ? 12 : 24 }}>
-    <Card
-    title={
-        <Space size={isMobile ? 8 : 16}>
-        <UserOutlined style={{ color: '#50EBEC', fontSize: isMobile ? 18 : 20 }} />
-        <span style={{ fontSize: isMobile ? 16 : 18, fontWeight: 500 }}>Gestión de Usuarios</span>
-        {isMobile && (
-            <Tag color="#50EBEC" style={{ marginLeft: 8, fontSize: 12 }}>
-            {users.length}
-            </Tag>
-        )}
-        </Space>
-    }
-    extra={
-        <Button 
-        type="primary" 
-        icon={<PlusOutlined />} 
-        onClick={handleCreate}
-        size={isMobile ? "middle" : "large"}
-        style={{ 
-            borderRadius: 10,
-            height: isMobile ? 36 : 40,
-            fontSize: isMobile ? 13 : 14
-        }}
-        >
-        {isMobile ? "Nuevo" : "Nuevo Usuario"}
-        </Button>
-    }
-    style={{ borderRadius: 16 }}
-    styles={{ body: { padding: isMobile ? 16 : 24 } }}
-    >
-    <div style={{ 
-        marginBottom: 16, 
-        display: 'flex', 
-        gap: 12, 
-        flexWrap: 'wrap',
-        flexDirection: isMobile ? 'column' : 'row'
-    }}>
-        <Input
-        placeholder="Buscar por nombre, email..."
-        prefix={<SearchOutlined />}
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        style={{ 
-            width: isMobile ? '100%' : 300,
-            borderRadius: 10,
-            height: isMobile ? 42 : 40
-        }}
-        allowClear
-        size="middle"
-        />
-        <Button 
-        icon={<ReloadOutlined />} 
-        onClick={fetchUsers}
-        style={{ 
-            borderRadius: 10,
-            height: isMobile ? 42 : 40,
-            width: isMobile ? '100%' : 'auto'
-        }}
-        >
-        Actualizar
-        </Button>
-    </div>
+    <div className="usuarios-container">
+      <Card
+        title={
+          <Space size={isMobile ? 8 : 16}>
+            <UserOutlined className="card-title-icon" />
+            <span className="card-title-text">Gestión de Usuarios</span>
 
-    {isMobile ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {filteredUsers.map((user) => (
-            <Card 
-            key={user.id} 
-            style={{ 
-                marginBottom: 0, 
-                borderRadius: 14,
-                cursor: 'pointer',
-                border: '1px solid #f0f0f0'
-            }} 
-            hoverable 
-            onClick={() => handleViewDetails(user)}
-            styles={{ body: { padding: 16 } }}
-            >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Space size={12}>
-                <Avatar 
-                    icon={<UserOutlined />} 
-                    style={{ 
-                    backgroundColor: '#50EBEC',
-                    width: 44,
-                    height: 44,
-                    lineHeight: '44px'
-                    }} 
-                />
-                <div>
-                    <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 4 }}>
-                    {user.nombre} {user.primer_apellido}
-                    </div>
-                    <div style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
-                    <MailOutlined style={{ marginRight: 6, fontSize: 11 }} />
-                    {user.email}
-                    </div>
-                    {user.telefono && (
-                    <div style={{ fontSize: 12, color: '#666' }}>
-                        <PhoneOutlined style={{ marginRight: 6, fontSize: 11 }} />
-                        {user.telefono}
-                    </div>
-                    )}
-                </div>
-                </Space>
-                <Tag color={user.activo ? 'green' : 'red'}>
-                {user.activo ? 'Activo' : 'Inactivo'}
-                </Tag>
-            </div>
-            </Card>
-        ))}
-        {filteredUsers.length === 0 && (
-            <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
-            No se encontraron usuarios
-            </div>
-        )}
+            {isMobile && (
+              <Tag color="#50EBEC" style={{ marginLeft: 8, fontSize: 12 }}>
+                {users.length}
+              </Tag>
+            )}
+          </Space>
+        }
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+            {isMobile ? 'Nuevo' : 'Nuevo Usuario'}
+          </Button>
+        }
+        className="usuarios-card"
+      >
+        <div className="usuarios-toolbar">
+          <Input
+            placeholder="Buscar por nombre, email..."
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            allowClear
+          />
+
+          <Button icon={<ReloadOutlined />} onClick={fetchUsers}>
+            Actualizar
+          </Button>
         </div>
-    ) : (
-        <Table
-        columns={columns}
-        dataSource={filteredUsers}
-        rowKey="id"
-        loading={loading}
-        pagination={{ pageSize: 10, showTotal: (total) => `Total ${total} usuarios` }}
-        scroll={{ x: 1000 }}
-        />
-    )}
-    </Card>
 
-      {/* Modal para crear/editar usuario */}
+        {isMobile ? (
+          <div className="users-mobile-list">
+            {filteredUsers.map((usuario) => (
+              <Card
+                key={usuario.id}
+                className="user-mobile-card"
+                hoverable
+                onClick={() => handleViewDetails(usuario)}
+              >
+                <div className="user-mobile-header">
+                  <Space size={12}>
+                    <Avatar icon={<UserOutlined />} className="user-avatar mobile" />
+
+                    <div>
+                      <div className="mobile-user-name">
+                        {usuario.nombre} {usuario.primer_apellido}
+                      </div>
+
+                      <div className="mobile-user-info">
+                        <MailOutlined /> {usuario.email}
+                      </div>
+
+                      {usuario.telefono && (
+                        <div className="mobile-user-info">
+                          <PhoneOutlined /> {usuario.telefono}
+                        </div>
+                      )}
+
+                      {usuario.rol_id !== 1 && (
+                        <div className="mobile-user-info">
+                          <ShopOutlined /> {getSucursalName(usuario.sucursal_id)}
+                        </div>
+                      )}
+                    </div>
+                  </Space>
+
+                  <Tag color={usuario.activo ? 'green' : 'red'}>
+                    {usuario.activo ? 'Activo' : 'Inactivo'}
+                  </Tag>
+                </div>
+
+                <div className="mobile-user-tags">
+                  <Tag color={getRolColor(usuario.rol_id)}>{getRolName(usuario.rol_id)}</Tag>
+                </div>
+              </Card>
+            ))}
+
+            {filteredUsers.length === 0 && (
+              <div className="empty-users">No se encontraron usuarios</div>
+            )}
+          </div>
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={filteredUsers}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              pageSize: 10,
+              showTotal: (total) => `Total ${total} usuarios`,
+            }}
+          />
+        )}
+      </Card>
+
       <Modal
         title={editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
         open={modalVisible}
         onCancel={() => setModalVisible(false)}
         onOk={handleSubmit}
-        width={500}
-        destroyOnHidden={true}
+        width={560}
+        destroyOnHidden
         mask={{ closable: false }}
         centered
       >
@@ -394,252 +600,132 @@ const Usuarios: React.FC = () => {
           <Form.Item name="nombre" label="Nombre" rules={[{ required: true, message: 'Ingrese el nombre' }]}>
             <Input placeholder="Ej: Juan" size="large" />
           </Form.Item>
-          
-          <Form.Item name="primer_apellido" label="Primer Apellido" rules={[{ required: true, message: 'Ingrese el primer apellido' }]}>
+
+          <Form.Item
+            name="primer_apellido"
+            label="Primer Apellido"
+            rules={[{ required: true, message: 'Ingrese el primer apellido' }]}
+          >
             <Input placeholder="Ej: Pérez" size="large" />
           </Form.Item>
-          
+
           <Form.Item name="segundo_apellido" label="Segundo Apellido">
             <Input placeholder="Ej: Gómez (opcional)" size="large" />
           </Form.Item>
-          
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email', message: 'Ingrese un email válido' }]}>
+
+          <Form.Item
+            name="email"
+            label="Email"
+            rules={[{ required: true, type: 'email', message: 'Ingrese un email válido' }]}
+          >
             <Input placeholder="ejemplo@correo.com" size="large" />
           </Form.Item>
-          
+
           <Form.Item name="telefono" label="Teléfono">
             <Input placeholder="Ej: 555-1234" size="large" />
           </Form.Item>
-          
-          <Form.Item name="rol_id" label="Rol" rules={[{ required: true }]}>
-            <Radio.Group 
+
+          <Form.Item name="rol_id" label="Rol" rules={[{ required: true, message: 'Seleccione un rol' }]}>
+            <Radio.Group
+              className="roles-radio-group"
               options={[
                 { label: 'Administrador', value: 1 },
                 { label: 'Médico', value: 2 },
+                { label: 'Consultor', value: 3 },
               ]}
               optionType="button"
               buttonStyle="solid"
               size="large"
+              onChange={(e) => {
+                if (e.target.value === 1) {
+                  form.setFieldsValue({ sucursal_id: undefined });
+                }
+              }}
             />
           </Form.Item>
-          
+
+          {rolSeleccionado !== 1 && (
+            <Form.Item
+              name="sucursal_id"
+              label="Consultorio / Sucursal"
+              rules={[{ required: true, message: 'Seleccione un consultorio' }]}
+            >
+              <Select
+                size="large"
+                placeholder="Seleccione un consultorio"
+                options={sucursales.map((sucursal) => ({
+                  label: sucursal.nombre,
+                  value: sucursal.id,
+                }))}
+              />
+            </Form.Item>
+          )}
+
           {!editingUser && (
-            <Form.Item name="password" label="Contraseña" rules={[{ required: true, min: 6, message: 'Mínimo 6 caracteres' }]}>
+            <Form.Item
+              name="password"
+              label="Contraseña"
+              rules={[{ required: true, min: 6, message: 'Mínimo 6 caracteres' }]}
+            >
               <Input.Password placeholder="••••••" size="large" />
             </Form.Item>
           )}
         </Form>
       </Modal>
 
-      {/* Modal para cambiar contraseña */}
       <Modal
         title="Cambiar Contraseña"
         open={passwordModalVisible}
         onCancel={() => setPasswordModalVisible(false)}
         onOk={handleChangePassword}
-        destroyOnHidden={true}
+        destroyOnHidden
         mask={{ closable: false }}
         width={450}
         centered
       >
         <Form form={passwordForm} layout="vertical">
-          <Form.Item name="currentPassword" label="Contraseña actual" rules={[{ required: true, message: 'Ingrese su contraseña actual' }]}>
+          <Form.Item
+            name="newPassword"
+            label="Nueva contraseña"
+            rules={[{ required: true, min: 6, message: 'Mínimo 6 caracteres' }]}
+          >
             <Input.Password placeholder="••••••" size="large" />
           </Form.Item>
-          <Form.Item name="newPassword" label="Nueva contraseña" rules={[{ required: true, min: 6, message: 'Mínimo 6 caracteres' }]}>
-            <Input.Password placeholder="••••••" size="large" />
-          </Form.Item>
-          <Form.Item name="confirmPassword" label="Confirmar nueva contraseña" rules={[{ required: true, message: 'Confirme la nueva contraseña' }]}>
+
+          <Form.Item
+            name="confirmPassword"
+            label="Confirmar nueva contraseña"
+            rules={[{ required: true, message: 'Confirme la nueva contraseña' }]}
+          >
             <Input.Password placeholder="••••••" size="large" />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* MODAL PARA PC - Detalles del usuario (solo en desktop) */}
       {!isMobile && (
         <Modal
           title={null}
           open={detailModalVisible}
           onCancel={() => setDetailModalVisible(false)}
           footer={null}
-          width={450}
+          width={460}
           centered
           className="elegant-detail-modal"
         >
-          {selectedUser && (
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <Avatar 
-                  size={80} 
-                  icon={<UserOutlined />} 
-                  style={{ 
-                    backgroundColor: '#50EBEC',
-                    boxShadow: '0 4px 12px rgba(80, 235, 236, 0.3)'
-                  }} 
-                />
-                <h2 style={{ marginTop: 16, marginBottom: 8 }}>
-                  {selectedUser.nombre} {selectedUser.primer_apellido}
-                </h2>
-                <Tag color={selectedUser.rol_id === 1 ? 'gold' : 'blue'} style={{ fontSize: 13, padding: '4px 12px' }}>
-                  {selectedUser.rol_id === 1 ? 'Administrador' : 'Médico'}
-                </Tag>
-              </div>
-
-              <div style={{ 
-                background: '#f8fafc', 
-                borderRadius: 16, 
-                padding: 20,
-                marginBottom: 24 
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-                  <MailOutlined style={{ color: '#50EBEC', fontSize: 18, width: 32 }} />
-                  <div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>Correo electrónico</div>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>{selectedUser.email}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-                  <PhoneOutlined style={{ color: '#50EBEC', fontSize: 18, width: 32 }} />
-                  <div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>Teléfono</div>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>{selectedUser.telefono || 'No registrado'}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <CheckCircleOutlined style={{ color: '#50EBEC', fontSize: 18, width: 32 }} />
-                  <div>
-                    <div style={{ fontSize: 12, color: '#64748b' }}>Estado</div>
-                    <Tag color={selectedUser.activo ? 'success' : 'error'} style={{ margin: 0 }}>
-                      {selectedUser.activo ? 'Activo' : 'Inactivo'}
-                    </Tag>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 12 }}>
-                <Button 
-                  type="primary" 
-                  icon={<EditOutlined />} 
-                  onClick={() => {
-                    setDetailModalVisible(false);
-                    handleEdit(selectedUser);
-                  }} 
-                  block
-                  style={{ borderRadius: 10, height: 44 }}
-                >
-                  Editar Usuario
-                </Button>
-                <Button 
-                  icon={<LockOutlined />} 
-                  onClick={() => {
-                    setDetailModalVisible(false);
-                    handleOpenPasswordModal(selectedUser.id!);
-                  }} 
-                  block
-                  style={{ borderRadius: 10, height: 44 }}
-                >
-                  Contraseña
-                </Button>
-                <Button 
-                  danger 
-                  icon={<DeleteOutlined />} 
-                  onClick={() => {
-                    setDetailModalVisible(false);
-                    showDeleteConfirm(selectedUser);
-                  }} 
-                  block
-                  style={{ borderRadius: 10, height: 44 }}
-                >
-                  Eliminar
-                </Button>
-              </div>
-            </div>
-          )}
+          <UserDetailContent />
         </Modal>
       )}
 
-      {/* DRAWER PARA MÓVIL - Detalles del usuario */}
       {isMobile && (
         <Drawer
           title="Detalles del Usuario"
           placement="bottom"
           open={detailDrawerVisible}
           onClose={() => setDetailDrawerVisible(false)}
-          height="auto"
+          size="large"
           className="mobile-details-drawer"
         >
-          {selectedUser && (
-            <div>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <Avatar 
-                  size={70} 
-                  icon={<UserOutlined />} 
-                  style={{ backgroundColor: '#50EBEC' }} 
-                />
-                <h3 style={{ marginTop: 12, marginBottom: 4 }}>
-                  {selectedUser.nombre} {selectedUser.primer_apellido}
-                </h3>
-                <Tag color={selectedUser.rol_id === 1 ? 'gold' : 'blue'}>
-                  {selectedUser.rol_id === 1 ? 'Administrador' : 'Médico'}
-                </Tag>
-              </div>
-
-              <div style={{ marginBottom: 20 }}>
-                <div style={{ padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
-                  <div><Text type="secondary">Email</Text></div>
-                  <div><Text strong>{selectedUser.email}</Text></div>
-                </div>
-                <div style={{ padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
-                  <div><Text type="secondary">Teléfono</Text></div>
-                  <div><Text strong>{selectedUser.telefono || 'No registrado'}</Text></div>
-                </div>
-                <div style={{ padding: '10px 0' }}>
-                  <div><Text type="secondary">Estado</Text></div>
-                  <Tag color={selectedUser.activo ? 'success' : 'error'}>
-                    {selectedUser.activo ? 'Activo' : 'Inactivo'}
-                  </Tag>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <Button 
-                  type="primary" 
-                  icon={<EditOutlined />} 
-                  onClick={() => {
-                    setDetailDrawerVisible(false);
-                    handleEdit(selectedUser);
-                  }} 
-                  block 
-                  size="large"
-                >
-                  Editar Usuario
-                </Button>
-                <Button 
-                  icon={<LockOutlined />} 
-                  onClick={() => {
-                    setDetailDrawerVisible(false);
-                    handleOpenPasswordModal(selectedUser.id!);
-                  }} 
-                  block 
-                  size="large"
-                >
-                  Cambiar Contraseña
-                </Button>
-                <Button 
-                  danger 
-                  icon={<DeleteOutlined />} 
-                  onClick={() => {
-                    setDetailDrawerVisible(false);
-                    showDeleteConfirm(selectedUser);
-                  }} 
-                  block 
-                  size="large"
-                >
-                  Eliminar Usuario
-                </Button>
-              </div>
-            </div>
-          )}
+          <UserDetailContent />
         </Drawer>
       )}
     </div>

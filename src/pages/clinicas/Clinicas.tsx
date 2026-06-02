@@ -15,6 +15,7 @@ import {
   Drawer,
   Select,
   Spin,
+  Empty,
 } from 'antd';
 import {
   PlusOutlined,
@@ -29,6 +30,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import { useAuth } from '../../hooks/useAuth';
 import axiosInstance from '../../api/axios.config';
+import './Clinicas.css';
 
 const { useBreakpoint } = Grid;
 
@@ -83,23 +85,17 @@ const Consultorios: React.FC = () => {
   const screens = useBreakpoint();
   const isMobile = !screens.md;
 
-  const getDireccion = (item: Consultorio) => {
-    return `${item.calle} ${item.numero_exterior}${
+  const getDireccion = (item: Consultorio) =>
+    `${item.calle} ${item.numero_exterior}${
       item.numero_interior ? ` Int. ${item.numero_interior}` : ''
     }, ${item.colonia}, ${item.municipio}, ${item.entidad}, C.P. ${item.codigo_postal}`;
-  };
 
   const getErrorMessage = (error: any, fallback: string) => {
     const backendMessage = error?.response?.data?.message;
     const details = error?.response?.data?.details;
 
-    if (Array.isArray(details) && details.length > 0) {
-      return details.join(', ');
-    }
-
-    if (Array.isArray(backendMessage)) {
-      return backendMessage.join(', ');
-    }
+    if (Array.isArray(details) && details.length > 0) return details.join(', ');
+    if (Array.isArray(backendMessage)) return backendMessage.join(', ');
 
     return backendMessage || fallback;
   };
@@ -133,12 +129,10 @@ const Consultorios: React.FC = () => {
         activo: item.activo,
       }));
 
-      const empresaId = user?.empresa_id || user?.empresa_id;
+      const empresaId = user?.empresa_id;
 
       setConsultorios(
-        empresaId
-          ? normalized.filter((item) => item.empresa_id === empresaId)
-          : normalized
+        empresaId ? normalized.filter((item) => item.empresa_id === empresaId) : normalized
       );
     } catch (error: any) {
       console.error('ERROR GET SUCURSALES:', error?.response?.data || error);
@@ -150,7 +144,7 @@ const Consultorios: React.FC = () => {
 
   useEffect(() => {
     fetchConsultorios();
-  }, [user?.empresa_id, user?.empresa_id]);
+  }, [user?.empresa_id]);
 
   const handleAdd = () => {
     setEditingConsultorio(null);
@@ -161,11 +155,8 @@ const Consultorios: React.FC = () => {
       numero_interior: '',
     });
 
-    if (isMobile) {
-      setDrawerVisible(true);
-    } else {
-      setModalVisible(true);
-    }
+    if (isMobile) setDrawerVisible(true);
+    else setModalVisible(true);
   };
 
   const handleEdit = (consultorio: Consultorio) => {
@@ -186,11 +177,8 @@ const Consultorios: React.FC = () => {
       activo: consultorio.activo,
     });
 
-    if (isMobile) {
-      setDrawerVisible(true);
-    } else {
-      setModalVisible(true);
-    }
+    if (isMobile) setDrawerVisible(true);
+    else setModalVisible(true);
   };
 
   const handleView = (consultorio: Consultorio) => {
@@ -241,7 +229,6 @@ const Consultorios: React.FC = () => {
         message.success('Consultorio actualizado correctamente');
       } else {
         await axiosInstance.post('/sucursales', basePayload);
-
         message.success('Consultorio agregado correctamente');
       }
 
@@ -250,7 +237,6 @@ const Consultorios: React.FC = () => {
       setSelectedConsultorio(null);
       setEditingConsultorio(null);
       form.resetFields();
-
       fetchConsultorios();
     } catch (error: any) {
       console.error('ERROR SAVE SUCURSAL:', error?.response?.data || error);
@@ -262,49 +248,40 @@ const Consultorios: React.FC = () => {
 
   const columns: ColumnsType<Consultorio> = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 70,
-    },
-    {
       title: 'Consultorio',
       dataIndex: 'nombre',
       key: 'nombre',
-      width: 220,
       ellipsis: true,
+      render: (text) => <strong className="table-clinic-name">{text}</strong>,
     },
     {
-      title: 'Dirección',
-      key: 'direccion',
+      title: 'Municipio',
+      dataIndex: 'municipio',
+      key: 'municipio',
+      width: 140,
       ellipsis: true,
-      render: (_, record) => (
-        <>
-          <EnvironmentOutlined /> {getDireccion(record)}
-        </>
-      ),
     },
     {
       title: 'Teléfono',
       dataIndex: 'telefono',
       key: 'telefono',
-      width: 150,
+      width: 145,
       render: (text) => (
-        <>
+        <span className="table-muted">
           <PhoneOutlined /> {text || 'Sin teléfono'}
-        </>
+        </span>
       ),
     },
     {
       title: 'Correo',
       dataIndex: 'correo',
       key: 'correo',
-      width: 220,
+      width: 230,
       ellipsis: true,
       render: (text) => (
-        <>
+        <span className="table-muted">
           <MailOutlined /> {text || 'Sin correo'}
-        </>
+        </span>
       ),
     },
     {
@@ -312,9 +289,9 @@ const Consultorios: React.FC = () => {
       dataIndex: 'activo',
       key: 'activo',
       align: 'center',
-      width: 100,
+      width: 105,
       render: (activo: boolean) => (
-        <Tag color={activo ? 'success' : 'default'}>
+        <Tag className={activo ? 'tag-active' : 'tag-inactive'}>
           {activo ? 'Activo' : 'Inactivo'}
         </Tag>
       ),
@@ -323,12 +300,13 @@ const Consultorios: React.FC = () => {
       title: 'Acciones',
       key: 'acciones',
       align: 'center',
-      width: 130,
+      width: 115,
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Editar">
             <Button
-              type="link"
+              className="action-btn edit-btn"
+              type="text"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
             />
@@ -342,7 +320,7 @@ const Consultorios: React.FC = () => {
             cancelText="No"
           >
             <Tooltip title="Eliminar">
-              <Button type="link" danger icon={<DeleteOutlined />} />
+              <Button className="action-btn delete-btn" type="text" icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
         </Space>
@@ -351,7 +329,7 @@ const Consultorios: React.FC = () => {
   ];
 
   const FormContent = () => (
-    <Form form={form} layout="vertical">
+    <Form form={form} layout="vertical" className="clinica-form">
       <Form.Item
         name="nombre"
         label="Nombre del Consultorio"
@@ -379,27 +357,15 @@ const Consultorios: React.FC = () => {
         <Input placeholder="Ej: consultorio@correo.com" size="large" />
       </Form.Item>
 
-      <Form.Item
-        name="entidad"
-        label="Entidad"
-        rules={[{ required: true, message: 'Ingrese la entidad' }]}
-      >
+      <Form.Item name="entidad" label="Entidad" rules={[{ required: true, message: 'Ingrese la entidad' }]}>
         <Input placeholder="Ej: Puebla" size="large" />
       </Form.Item>
 
-      <Form.Item
-        name="municipio"
-        label="Municipio"
-        rules={[{ required: true, message: 'Ingrese el municipio' }]}
-      >
+      <Form.Item name="municipio" label="Municipio" rules={[{ required: true, message: 'Ingrese el municipio' }]}>
         <Input placeholder="Ej: Puebla" size="large" />
       </Form.Item>
 
-      <Form.Item
-        name="colonia"
-        label="Colonia"
-        rules={[{ required: true, message: 'Ingrese la colonia' }]}
-      >
+      <Form.Item name="colonia" label="Colonia" rules={[{ required: true, message: 'Ingrese la colonia' }]}>
         <Input placeholder="Ej: Centro" size="large" />
       </Form.Item>
 
@@ -411,11 +377,7 @@ const Consultorios: React.FC = () => {
         <Input placeholder="Ej: 72000" size="large" />
       </Form.Item>
 
-      <Form.Item
-        name="calle"
-        label="Calle"
-        rules={[{ required: true, message: 'Ingrese la calle' }]}
-      >
+      <Form.Item name="calle" label="Calle" rules={[{ required: true, message: 'Ingrese la calle' }]}>
         <Input placeholder="Ej: Av. Principal" size="large" />
       </Form.Item>
 
@@ -443,9 +405,7 @@ const Consultorios: React.FC = () => {
         >
           <Select
             size="large"
-            getPopupContainer={(triggerNode) =>
-              triggerNode.parentElement || document.body
-            }
+            getPopupContainer={(triggerNode) => triggerNode.parentElement || document.body}
             options={[
               { label: 'Activo', value: true },
               { label: 'Inactivo', value: false },
@@ -458,42 +418,39 @@ const Consultorios: React.FC = () => {
 
   const DetailsView = () => (
     <div className="clinica-details">
-      <div className="detail-item">
-        <EnvironmentOutlined style={{ color: '#50EBEC', fontSize: 18 }} />
-        <div>
-          <div className="detail-label">Dirección</div>
-          <div className="detail-value">
-            {selectedConsultorio ? getDireccion(selectedConsultorio) : ''}
-          </div>
+      <div className="detail-hero">
+        <div className="detail-icon">
+          <ShopOutlined />
         </div>
-      </div>
-
-      <div className="detail-item">
-        <PhoneOutlined style={{ color: '#50EBEC', fontSize: 18 }} />
         <div>
-          <div className="detail-label">Teléfono</div>
-          <div className="detail-value">
-            {selectedConsultorio?.telefono || 'Sin teléfono'}
-          </div>
-        </div>
-      </div>
-
-      <div className="detail-item">
-        <MailOutlined style={{ color: '#50EBEC', fontSize: 18 }} />
-        <div>
-          <div className="detail-label">Correo</div>
-          <div className="detail-value">
-            {selectedConsultorio?.correo || 'Sin correo'}
-          </div>
-        </div>
-      </div>
-
-      <div className="detail-row">
-        <div className="detail-col">
-          <div className="detail-label">Estado</div>
-          <Tag color={selectedConsultorio?.activo ? 'success' : 'default'} style={{ margin: 0 }}>
+          <h3>{selectedConsultorio?.nombre}</h3>
+          <Tag className={selectedConsultorio?.activo ? 'tag-active' : 'tag-inactive'}>
             {selectedConsultorio?.activo ? 'Activo' : 'Inactivo'}
           </Tag>
+        </div>
+      </div>
+
+      <div className="detail-item">
+        <EnvironmentOutlined />
+        <div>
+          <div className="detail-label">Dirección</div>
+          <div className="detail-value">{selectedConsultorio ? getDireccion(selectedConsultorio) : ''}</div>
+        </div>
+      </div>
+
+      <div className="detail-item">
+        <PhoneOutlined />
+        <div>
+          <div className="detail-label">Teléfono</div>
+          <div className="detail-value">{selectedConsultorio?.telefono || 'Sin teléfono'}</div>
+        </div>
+      </div>
+
+      <div className="detail-item">
+        <MailOutlined />
+        <div>
+          <div className="detail-label">Correo</div>
+          <div className="detail-value">{selectedConsultorio?.correo || 'Sin correo'}</div>
         </div>
       </div>
 
@@ -522,7 +479,7 @@ const Consultorios: React.FC = () => {
           okText="Sí"
           cancelText="No"
         >
-          <Button danger icon={<DeleteOutlined />} block style={{ marginTop: 12 }}>
+          <Button danger icon={<DeleteOutlined />} block>
             Eliminar Consultorio
           </Button>
         </Popconfirm>
@@ -533,37 +490,71 @@ const Consultorios: React.FC = () => {
   const MobileList = () => (
     <Spin spinning={loading}>
       <div className="clinica-mobile-list">
-        {consultorios.map((item) => (
-          <Card
-            key={item.id}
-            className="clinica-card-mobile"
-            hoverable
-            onClick={() => handleView(item)}
-          >
-            <div className="clinica-card-header">
-              <Space>
-                <ShopOutlined style={{ color: '#50EBEC', fontSize: 20 }} />
-                <span className="clinica-card-title">{item.nombre}</span>
-              </Space>
+        {consultorios.length === 0 && !loading ? (
+          <Empty description="No hay consultorios registrados" />
+        ) : (
+          consultorios.map((item) => (
+            <Card
+              key={item.id}
+              className="clinica-card-mobile"
+              hoverable
+              onClick={() => handleView(item)}
+            >
+              <div className="clinica-card-header">
+                <div className="clinic-title-wrap">
+                  <div className="clinic-icon-circle">
+                    <ShopOutlined />
+                  </div>
 
-              <Tag color={item.activo ? 'success' : 'default'}>
-                {item.activo ? 'Activo' : 'Inactivo'}
-              </Tag>
-            </div>
+                  <div>
+                    <span className="clinica-card-title">{item.nombre}</span>
+                    <span className="clinic-card-subtitle">
+                      {item.municipio}, {item.entidad}
+                    </span>
+                  </div>
+                </div>
 
-            <div className="clinica-card-info">
-              <div className="info-row">
-                <EnvironmentOutlined style={{ color: '#50EBEC' }} />
-                <span>{getDireccion(item)}</span>
+                <Tag className={item.activo ? 'tag-active' : 'tag-inactive'}>
+                  {item.activo ? 'Activo' : 'Inactivo'}
+                </Tag>
               </div>
 
-              <div className="info-row">
-                <PhoneOutlined style={{ color: '#50EBEC' }} />
-                <span>{item.telefono || 'Sin teléfono'}</span>
+              <div className="clinica-card-info">
+                <div className="info-row">
+                  <EnvironmentOutlined />
+                  <span>{getDireccion(item)}</span>
+                </div>
+
+                <div className="info-row">
+                  <PhoneOutlined />
+                  <span>{item.telefono || 'Sin teléfono'}</span>
+                </div>
+
+                <div className="info-row">
+                  <MailOutlined />
+                  <span>{item.correo || 'Sin correo'}</span>
+                </div>
               </div>
-            </div>
-          </Card>
-        ))}
+
+              <div className="info-stats">
+                <div className="stat">
+                  <span className="stat-label">ID</span>
+                  <span className="stat-value">#{item.id}</span>
+                </div>
+
+                <div className="stat">
+                  <span className="stat-label">C.P.</span>
+                  <span className="stat-value">{item.codigo_postal}</span>
+                </div>
+
+                <div className="stat">
+                  <span className="stat-label">Estado</span>
+                  <span className="stat-value">{item.activo ? 'Activo' : 'Inactivo'}</span>
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </Spin>
   );
@@ -587,17 +578,20 @@ const Consultorios: React.FC = () => {
         {isMobile ? (
           <MobileList />
         ) : (
-          <Table
-            columns={columns}
-            dataSource={consultorios}
-            rowKey="id"
-            loading={loading}
-            pagination={{
-              pageSize: 10,
-              showTotal: (total) => `Total ${total} consultorios`,
-            }}
-            scroll={{ x: 1100 }}
-          />
+          <div className="table-shell">
+            <Table
+              columns={columns}
+              dataSource={consultorios}
+              rowKey="id"
+              loading={loading}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: false,
+                showTotal: (total) => `Total ${total} consultorios`,
+              }}
+              size="middle"
+            />
+          </div>
         )}
       </Card>
 
@@ -612,7 +606,7 @@ const Consultorios: React.FC = () => {
           }}
           onOk={handleSubmit}
           confirmLoading={loading}
-          width={700}
+          width={760}
           okText={editingConsultorio ? 'Actualizar' : 'Agregar'}
           cancelText="Cancelar"
           destroyOnHidden
@@ -661,7 +655,7 @@ const Consultorios: React.FC = () => {
 
       {isMobile && (
         <Drawer
-          title={selectedConsultorio?.nombre}
+          title={null}
           placement="bottom"
           open={drawerVisible && !!selectedConsultorio}
           onClose={() => {
@@ -669,7 +663,7 @@ const Consultorios: React.FC = () => {
             setSelectedConsultorio(null);
           }}
           size="default"
-          className="clinica-drawer"
+          className="clinica-drawer details-drawer"
           closeIcon={<CloseOutlined />}
           destroyOnHidden
         >
