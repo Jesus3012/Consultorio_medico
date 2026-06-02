@@ -36,8 +36,6 @@ class AuthService {
         password
       });
       
-      console.log('📦 Respuesta del login:', JSON.stringify(response.data, null, 2));
-      
       if (response.data?.success && response.data?.data) {
         const accessToken = response.data.data.accessToken;
         
@@ -47,7 +45,6 @@ class AuthService {
           
           // Decodificar el token para obtener el userId
           const decodedToken = decodeToken(accessToken);
-          console.log('🔓 Token decodificado:', decodedToken);
           
           const userId = decodedToken?.userId || decodedToken?.sub || decodedToken?.id;
           
@@ -102,13 +99,10 @@ class AuthService {
         }
       });
       
-      console.log(`📋 Respuesta de /usuarios/${userId}:`, JSON.stringify(response.data, null, 2));
-      
       // La API devuelve: { success, statusCode, message, data: { ... } }
       const userData = response.data?.data;
       
       if (userData) {
-        console.log('✅ Usuario encontrado por ID:', userData);
         
         // Mapear los campos de la API a nuestros campos
         // API usa: primerApellido, segundoApellido, correo, cedulaProfesional

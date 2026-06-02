@@ -94,6 +94,22 @@ body {
 }
 
 /* Transiciones suaves */
-* {
+button,
+a,
+.ant-btn,
+.ant-card,
+.ant-input,
+.ant-input-affix-wrapper {
   transition: all 0.2s ease-in-out;
+}
+
+.ant-select,
+.ant-select *,
+.ant-select-dropdown,
+.ant-select-dropdown * {
+  transition: none !important;
+}
+
+.ant-select-dropdown {
+  z-index: 9999 !important;
 }
