@@ -1,6 +1,7 @@
 /* ============================================
-   SIDEBAR - DESKTOP (ANCHO CORREGIDO)
+   SIDEBAR - DESKTOP
    ============================================ */
+
 .custom-sider {
   background: linear-gradient(180deg, #0F4C4D 0%, #1A6B6C 100%);
   box-shadow: 2px 0 12px rgba(0, 0, 0, 0.1);
@@ -48,7 +49,10 @@
   font-size: 18px;
 }
 
-/* Menú Desktop */
+/* ============================================
+   MENU
+   ============================================ */
+
 .custom-menu {
   background: transparent;
   border-right: none;
@@ -57,7 +61,6 @@
 .custom-menu .ant-menu-item {
   border-radius: 10px;
   margin: 4px 12px;
-  transition: all 0.3s;
   height: 44px;
   line-height: 44px;
   color: rgba(255, 255, 255, 0.85);
@@ -77,20 +80,22 @@
 .custom-menu .ant-menu-item-selected {
   background: linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%);
   color: #0F4C4D;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .custom-menu .ant-menu-item-selected .anticon {
   color: #0F4C4D;
 }
 
-/* Ajuste del contenido principal para sidebar fijo */
+/* ============================================
+   LAYOUT
+   ============================================ */
+
 .main-layout {
   margin-left: 280px;
-  transition: all 0.2s;
+  transition: all .25s ease;
 }
 
-/* Cuando el sidebar está colapsado */
 .custom-sider.ant-layout-sider-collapsed + .main-layout {
   margin-left: 80px;
 }
@@ -98,17 +103,22 @@
 /* ============================================
    HEADER
    ============================================ */
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+
   padding: 0 20px;
-  background: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  background: #fff;
+
+  height: 64px;
+
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .04);
+
   position: sticky;
   top: 0;
   z-index: 10;
-  height: 64px;
 }
 
 .header-left {
@@ -118,186 +128,239 @@
 }
 
 .desktop-collapse-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   font-size: 18px;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  color: #4a5568;
+  color: #4A5568;
 }
 
 .desktop-collapse-btn:hover {
-  background: rgba(80, 235, 236, 0.15);
+  background: rgba(80, 235, 236, .15);
   color: #50EBEC;
 }
 
 .mobile-menu-btn {
   display: none;
-  font-size: 18px;
 }
 
 .page-title {
-  font-weight: 500;
+  font-weight: 600;
 }
 
-/* Header right */
+/* ============================================
+   HEADER RIGHT
+   ============================================ */
+
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .notification-btn {
   font-size: 18px;
-  color: #4a5568;
+  color: #4A5568;
 }
 
 .notification-btn:hover {
   color: #50EBEC;
-  background: rgba(80, 235, 236, 0.1);
+  background: rgba(80, 235, 236, .10);
 }
 
-/* Información del usuario */
-.user-info-block {
+/* ============================================
+   USER DROPDOWN
+   ============================================ */
+
+.user-dropdown-trigger {
+  border: none;
+  background: transparent;
+  outline: none;
+
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 16px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+
+  padding: 8px 14px;
+
+  border-radius: 16px;
+
+  cursor: pointer;
+
+  transition: all .25s ease;
+}
+
+.user-dropdown-trigger:hover {
+  background: rgba(80, 235, 236, .10);
+}
+
+.user-dropdown-trigger:focus {
+  outline: none;
 }
 
 .user-text-info {
   display: flex;
   flex-direction: column;
-  line-height: 1.3;
+  align-items: flex-start;
 }
 
 .user-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #2BA1A2;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0F4C4D;
+  line-height: 1.2;
 }
 
 .user-role {
+  font-size: 12px;
+  color: #64748B;
+  line-height: 1.2;
+}
+
+.user-dropdown-arrow {
   font-size: 11px;
-  color: #64748b;
+  color: #94A3B8;
 }
 
-/* Botón de cerrar sesión */
-.logout-btn {
-  border-radius: 10px;
-  height: 38px;
-  padding: 0 18px;
-  font-size: 13px;
+.user-dropdown-trigger:hover .user-dropdown-arrow {
+  color: #36C6C7;
+}
+
+/* Avatar */
+
+.ant-avatar {
+  box-shadow: 0 4px 12px rgba(80, 235, 236, .25);
+}
+
+/* ============================================
+   DROPDOWN MENU
+   ============================================ */
+
+.ant-dropdown {
+  min-width: 240px;
+}
+
+.ant-dropdown .ant-dropdown-menu {
+  border-radius: 18px;
+  padding: 8px;
+
+  border: 1px solid #E2E8F0;
+
+  box-shadow:
+    0 12px 24px rgba(15, 23, 42, .08),
+    0 2px 8px rgba(15, 23, 42, .05);
+}
+
+.ant-dropdown-menu-item {
+  border-radius: 12px !important;
+  min-height: 44px;
   font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #FFF5F5 0%, #FFF0F0 100%);
-  border: 1px solid #FFCDD2;
-  color: #E53E3E;
-  transition: all 0.3s;
 }
 
-.logout-btn:hover {
-  background: linear-gradient(135deg, #E53E3E 0%, #C53030 100%);
-  border-color: #C53030;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.3);
+.ant-dropdown-menu-item:hover {
+  background: rgba(80, 235, 236, .10) !important;
 }
 
-.logout-mobile-btn {
-  display: none;
+.ant-dropdown-menu-item-danger {
+  color: #E53E3E !important;
 }
 
-/* Content */
+.ant-dropdown-menu-item-danger:hover {
+  background: rgba(229, 62, 62, .08) !important;
+}
+
+/* ============================================
+   CONTENT
+   ============================================ */
+
 .dashboard-content {
   margin: 16px;
   padding: 20px;
   min-height: 280px;
-  background: #f5f7fa;
+
+  background: #F5F7FA;
   border-radius: 16px;
 }
 
 /* ============================================
-   RESPONSIVE
+   MOBILE
    ============================================ */
+
 @media (max-width: 768px) {
+
   .main-layout {
     margin-left: 0 !important;
   }
-  
+
   .custom-sider {
     display: none;
   }
-  
+
   .mobile-menu-btn {
     display: flex;
   }
-  
+
   .desktop-collapse-btn {
     display: none;
   }
-  
+
   .dashboard-header {
     padding: 0 12px;
   }
-  
+
   .page-title {
     display: none;
   }
-  
-  .user-text-info {
+
+  .user-text-info,
+  .user-dropdown-arrow {
     display: none;
   }
-  
-  .user-info-block {
-    padding: 6px 10px;
+
+  .user-dropdown-trigger {
+    padding: 4px;
+    gap: 0;
   }
-  
-  .logout-btn {
-    display: none;
+
+  .header-right {
+    gap: 10px;
   }
-  
-  .logout-mobile-btn {
-    display: flex;
-    font-size: 18px;
-    color: #E53E3E;
-  }
-  
+
   .dashboard-content {
     margin: 12px;
     padding: 16px;
   }
 }
 
-/* Tablet */
+/* ============================================
+   TABLET
+   ============================================ */
+
 @media (min-width: 769px) and (max-width: 1024px) {
+
   .main-layout {
     margin-left: 280px;
   }
-  
+
   .user-text-info {
     display: none;
   }
-  
-  .user-info-block {
-    padding: 6px 10px;
-  }
-  
-  .logout-btn {
-    padding: 0 12px;
-  }
-  
-  .logout-btn span:not(.anticon) {
+
+  .user-dropdown-arrow {
     display: none;
+  }
+
+  .user-dropdown-trigger {
+    padding: 6px;
   }
 }
 
-/* Desktop normal */
+/* ============================================
+   DESKTOP
+   ============================================ */
+
 @media (min-width: 1025px) {
+
   .main-layout {
     margin-left: 280px;
   }

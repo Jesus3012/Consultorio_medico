@@ -8,7 +8,7 @@ import {
   Badge,
   Tooltip,
   App,
-  Space,
+  Dropdown,
 } from 'antd';
 import {
   DashboardOutlined,
@@ -26,6 +26,8 @@ import {
   PoweroffOutlined,
   MenuOutlined,
   TeamOutlined,
+  ProfileOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
@@ -38,6 +40,7 @@ const { Text } = Typography;
 const PrivateLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,8 +48,8 @@ const PrivateLayout: React.FC = () => {
 
   const menuItems = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuarios' },
     { key: '/clinicas', icon: <ShopOutlined />, label: 'Consultorios' },
+    { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuarios' },
     { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
     { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
     { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
@@ -82,12 +85,6 @@ const PrivateLayout: React.FC = () => {
     setMobileMenuOpen(false);
   };
 
-  const getGenderIcon = () => {
-    if (user?.genero === 'FEMALE') return '👩';
-    if (user?.genero === 'MALE') return '👨';
-    return '👤';
-  };
-
   const getRolName = () => {
     switch (user?.rol_id) {
       case 1:
@@ -96,6 +93,44 @@ const PrivateLayout: React.FC = () => {
         return 'Médico';
       default:
         return 'Usuario';
+    }
+  };
+
+  const userMenuItems = [
+    {
+      key: 'profile',
+      icon: <ProfileOutlined />,
+      label: 'Mi perfil',
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: 'Configuración',
+    },
+    {
+      type: 'divider' as const,
+    },
+    {
+      key: 'logout',
+      danger: true,
+      icon: <LogoutOutlined />,
+      label: 'Cerrar sesión',
+    },
+  ];
+
+  const handleUserMenuClick = ({ key }: { key: string }) => {
+    if (key === 'profile') {
+      navigate('/perfil');
+      return;
+    }
+
+    if (key === 'settings') {
+      navigate('/configuracion');
+      return;
+    }
+
+    if (key === 'logout') {
+      showLogoutConfirm();
     }
   };
 
@@ -157,34 +192,36 @@ const PrivateLayout: React.FC = () => {
               </Badge>
             </Tooltip>
 
-            <div className="user-info-block">
-              <Avatar
-                size={36}
-                icon={<UserOutlined />}
-                style={{
-                  background: 'linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%)',
-                }}
-              />
-              <div className="user-text-info">
-                <div className="user-name">
-                  {user?.nombre} {user?.primer_apellido || ''}
-                </div>
-                <div className="user-role">
-                  {getGenderIcon()} {getRolName()}
-                </div>
-              </div>
-            </div>
+            <Dropdown
+              menu={{
+                items: userMenuItems,
+                onClick: handleUserMenuClick,
+              }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <button className="user-dropdown-trigger" type="button">
+                <Avatar
+                  size={40}
+                  icon={<UserOutlined />}
+                  style={{
+                    background: 'linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%)',
+                  }}
+                />
 
-            <Button icon={<LogoutOutlined />} onClick={showLogoutConfirm} className="logout-btn">
-              Salir
-            </Button>
+                <div className="user-text-info">
+                  <div className="user-name">
+                    {user?.nombre} {user?.primer_apellido || ''}
+                  </div>
 
-            <Button
-              type="text"
-              icon={<LogoutOutlined />}
-              onClick={showLogoutConfirm}
-              className="logout-mobile-btn"
-            />
+                  <div className="user-role">
+                    {getRolName()}
+                  </div>
+                </div>
+
+                <DownOutlined className="user-dropdown-arrow" />
+              </button>
+            </Dropdown>
           </div>
         </Header>
 
@@ -193,9 +230,9 @@ const PrivateLayout: React.FC = () => {
         </Content>
       </Layout>
 
-      <MobileMenu 
-        open={mobileMenuOpen} 
-        onClose={() => setMobileMenuOpen(false)} 
+      <MobileMenu
+        open={mobileMenuOpen}
+        onClose={() => setMobileMenuOpen(false)}
         onMenuClick={handleMenuClick}
       />
     </Layout>

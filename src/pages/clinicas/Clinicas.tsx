@@ -1,79 +1,339 @@
-import React, { useState } from 'react';
-import { Card, Table, Button, Space, Modal, Form, Input, InputNumber, message, Tag, Popconfirm, Tooltip, Grid, Drawer, List } from 'antd';
-import { 
-  PlusOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import React, { useEffect, useState } from 'react';
+import {
+  App,
+  Card,
+  Table,
+  Button,
+  Space,
+  Modal,
+  Form,
+  Input,
+  Tag,
+  Popconfirm,
+  Tooltip,
+  Grid,
+  Drawer,
+  Select,
+  Spin,
+} from 'antd';
+import {
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   ShopOutlined,
   EnvironmentOutlined,
   PhoneOutlined,
   MailOutlined,
-  CloseOutlined
+  CloseOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { useAuth } from '../../hooks/useAuth';
+import axiosInstance from '../../api/axios.config';
 
 const { useBreakpoint } = Grid;
 
-interface Clinica {
+interface ConsultorioApi {
   id: number;
+  empresaId?: number;
+  empresa_id?: number;
   nombre: string;
-  ubicacion: string;
-  telefono: string;
-  email: string;
-  capacidad: number;
-  estado: 'activo' | 'inactivo';
-  pacientes: number;
+  telefono?: string | null;
+  correo?: string | null;
+  entidad: string;
+  municipio: string;
+  colonia: string;
+  codigoPostal?: string;
+  codigo_postal?: string;
+  calle: string;
+  numeroExterior?: string;
+  numero_exterior?: string;
+  numeroInterior?: string;
+  numero_interior?: string;
+  activo: boolean;
 }
 
-const Clinicas: React.FC = () => {
+interface Consultorio {
+  id: number;
+  empresa_id: number;
+  nombre: string;
+  telefono: string;
+  correo: string;
+  entidad: string;
+  municipio: string;
+  colonia: string;
+  codigo_postal: string;
+  calle: string;
+  numero_exterior: string;
+  numero_interior: string;
+  activo: boolean;
+}
+
+const Consultorios: React.FC = () => {
+  const { user } = useAuth();
+  const { message } = App.useApp();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [selectedClinica, setSelectedClinica] = useState<Clinica | null>(null);
-  const [editingClinica, setEditingClinica] = useState<Clinica | null>(null);
-  const [form] = Form.useForm();
+  const [selectedConsultorio, setSelectedConsultorio] = useState<Consultorio | null>(null);
+  const [editingConsultorio, setEditingConsultorio] = useState<Consultorio | null>(null);
+  const [consultorios, setConsultorios] = useState<Consultorio[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.md;
 
-  // Datos de ejemplo
-  const [clinicas, setClinicas] = useState<Clinica[]>([
-    { id: 1, nombre: 'Consultorio Médico Matriz', ubicacion: 'Av. Principal #123', telefono: '555-1234', email: 'matriz@medisys.com', capacidad: 50, estado: 'activo', pacientes: 1247 },
-    { id: 2, nombre: 'Sucursal Norte', ubicacion: 'Calle Norte #456', telefono: '555-5678', email: 'norte@medisys.com', capacidad: 35, estado: 'activo', pacientes: 856 },
-    { id: 3, nombre: 'Sucursal Sur', ubicacion: 'Av. Sur #789', telefono: '555-9012', email: 'sur@medisys.com', capacidad: 40, estado: 'activo', pacientes: 623 },
-    { id: 4, nombre: 'Consultorio Especialidades', ubicacion: 'Blvd. Centro #321', telefono: '555-3456', email: 'especialidades@medisys.com', capacidad: 25, estado: 'inactivo', pacientes: 432 },
-  ]);
+  const getDireccion = (item: Consultorio) => {
+    return `${item.calle} ${item.numero_exterior}${
+      item.numero_interior ? ` Int. ${item.numero_interior}` : ''
+    }, ${item.colonia}, ${item.municipio}, ${item.entidad}, C.P. ${item.codigo_postal}`;
+  };
 
-  // Columnas para desktop
-  const columns: ColumnsType<Clinica> = [
-    { title: 'ID', dataIndex: 'id', key: 'id', width: 70 },
-    { title: 'Nombre', dataIndex: 'nombre', key: 'nombre', width: 200, ellipsis: true },
-    { title: 'Ubicación', dataIndex: 'ubicacion', key: 'ubicacion', ellipsis: true, render: (text) => <><EnvironmentOutlined /> {text}</> },
-    { title: 'Teléfono', dataIndex: 'telefono', key: 'telefono', render: (text) => <><PhoneOutlined /> {text}</> },
-    { title: 'Email', dataIndex: 'email', key: 'email', ellipsis: true, render: (text) => <><MailOutlined /> {text}</> },
-    { title: 'Capacidad', dataIndex: 'capacidad', key: 'capacidad', align: 'center' as const, width: 90 },
-    { title: 'Pacientes', dataIndex: 'pacientes', key: 'pacientes', align: 'center' as const, width: 90 },
-    { 
-      title: 'Estado', 
-      dataIndex: 'estado', 
-      key: 'estado',
-      align: 'center' as const,
+  const getErrorMessage = (error: any, fallback: string) => {
+    const backendMessage = error?.response?.data?.message;
+    const details = error?.response?.data?.details;
+
+    if (Array.isArray(details) && details.length > 0) {
+      return details.join(', ');
+    }
+
+    if (Array.isArray(backendMessage)) {
+      return backendMessage.join(', ');
+    }
+
+    return backendMessage || fallback;
+  };
+
+  const fetchConsultorios = async () => {
+    setLoading(true);
+
+    try {
+      const response = await axiosInstance.get('/sucursales', {
+        params: {
+          page: 1,
+          limit: 100,
+        },
+      });
+
+      const result = response.data?.data?.data || [];
+
+      const normalized: Consultorio[] = result.map((item: ConsultorioApi) => ({
+        id: item.id,
+        empresa_id: item.empresaId ?? item.empresa_id ?? 0,
+        nombre: item.nombre || '',
+        telefono: item.telefono || '',
+        correo: item.correo || '',
+        entidad: item.entidad || '',
+        municipio: item.municipio || '',
+        colonia: item.colonia || '',
+        codigo_postal: item.codigoPostal ?? item.codigo_postal ?? '',
+        calle: item.calle || '',
+        numero_exterior: item.numeroExterior ?? item.numero_exterior ?? '',
+        numero_interior: item.numeroInterior ?? item.numero_interior ?? '',
+        activo: item.activo,
+      }));
+
+      const empresaId = user?.empresa_id || user?.empresa_id;
+
+      setConsultorios(
+        empresaId
+          ? normalized.filter((item) => item.empresa_id === empresaId)
+          : normalized
+      );
+    } catch (error: any) {
+      console.error('ERROR GET SUCURSALES:', error?.response?.data || error);
+      message.error(getErrorMessage(error, 'No fue posible cargar los consultorios'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchConsultorios();
+  }, [user?.empresa_id, user?.empresa_id]);
+
+  const handleAdd = () => {
+    setEditingConsultorio(null);
+    setSelectedConsultorio(null);
+    form.resetFields();
+
+    form.setFieldsValue({
+      numero_interior: '',
+    });
+
+    if (isMobile) {
+      setDrawerVisible(true);
+    } else {
+      setModalVisible(true);
+    }
+  };
+
+  const handleEdit = (consultorio: Consultorio) => {
+    setEditingConsultorio(consultorio);
+    setSelectedConsultorio(null);
+
+    form.setFieldsValue({
+      nombre: consultorio.nombre,
+      telefono: consultorio.telefono,
+      correo: consultorio.correo,
+      entidad: consultorio.entidad,
+      municipio: consultorio.municipio,
+      colonia: consultorio.colonia,
+      codigo_postal: consultorio.codigo_postal,
+      calle: consultorio.calle,
+      numero_exterior: consultorio.numero_exterior,
+      numero_interior: consultorio.numero_interior,
+      activo: consultorio.activo,
+    });
+
+    if (isMobile) {
+      setDrawerVisible(true);
+    } else {
+      setModalVisible(true);
+    }
+  };
+
+  const handleView = (consultorio: Consultorio) => {
+    setSelectedConsultorio(consultorio);
+    setEditingConsultorio(null);
+    setDrawerVisible(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    setLoading(true);
+
+    try {
+      await axiosInstance.delete(`/sucursales/${id}`);
+      message.success('Consultorio eliminado correctamente');
+      fetchConsultorios();
+    } catch (error: any) {
+      console.error('ERROR DELETE SUCURSAL:', error?.response?.data || error);
+      message.error(getErrorMessage(error, 'No fue posible eliminar el consultorio'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      setLoading(true);
+
+      const basePayload = {
+        nombre: String(values.nombre || '').trim(),
+        telefono: String(values.telefono || '').trim(),
+        correo: String(values.correo || '').trim(),
+        entidad: String(values.entidad || '').trim(),
+        municipio: String(values.municipio || '').trim(),
+        colonia: String(values.colonia || '').trim(),
+        codigoPostal: String(values.codigo_postal || '').trim(),
+        calle: String(values.calle || '').trim(),
+        numeroExterior: String(values.numero_exterior || '').trim(),
+        numeroInterior: String(values.numero_interior || '').trim(),
+      };
+
+      if (editingConsultorio) {
+        await axiosInstance.patch(`/sucursales/${editingConsultorio.id}`, {
+          ...basePayload,
+          activo: values.activo,
+        });
+
+        message.success('Consultorio actualizado correctamente');
+      } else {
+        await axiosInstance.post('/sucursales', basePayload);
+
+        message.success('Consultorio agregado correctamente');
+      }
+
+      setModalVisible(false);
+      setDrawerVisible(false);
+      setSelectedConsultorio(null);
+      setEditingConsultorio(null);
+      form.resetFields();
+
+      fetchConsultorios();
+    } catch (error: any) {
+      console.error('ERROR SAVE SUCURSAL:', error?.response?.data || error);
+      message.error(getErrorMessage(error, 'No fue posible guardar el consultorio'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const columns: ColumnsType<Consultorio> = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 70,
+    },
+    {
+      title: 'Consultorio',
+      dataIndex: 'nombre',
+      key: 'nombre',
+      width: 220,
+      ellipsis: true,
+    },
+    {
+      title: 'Dirección',
+      key: 'direccion',
+      ellipsis: true,
+      render: (_, record) => (
+        <>
+          <EnvironmentOutlined /> {getDireccion(record)}
+        </>
+      ),
+    },
+    {
+      title: 'Teléfono',
+      dataIndex: 'telefono',
+      key: 'telefono',
+      width: 150,
+      render: (text) => (
+        <>
+          <PhoneOutlined /> {text || 'Sin teléfono'}
+        </>
+      ),
+    },
+    {
+      title: 'Correo',
+      dataIndex: 'correo',
+      key: 'correo',
+      width: 220,
+      ellipsis: true,
+      render: (text) => (
+        <>
+          <MailOutlined /> {text || 'Sin correo'}
+        </>
+      ),
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'activo',
+      key: 'activo',
+      align: 'center',
       width: 100,
-      render: (estado) => (
-        <Tag color={estado === 'activo' ? 'success' : 'default'}>
-          {estado === 'activo' ? 'Activo' : 'Inactivo'}
+      render: (activo: boolean) => (
+        <Tag color={activo ? 'success' : 'default'}>
+          {activo ? 'Activo' : 'Inactivo'}
         </Tag>
-      )
+      ),
     },
     {
       title: 'Acciones',
       key: 'acciones',
-      align: 'center' as const,
-      width: 120,
+      align: 'center',
+      width: 130,
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Editar">
-            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+            <Button
+              type="link"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            />
           </Tooltip>
+
           <Popconfirm
             title="¿Eliminar consultorio?"
             description="¿Estás seguro de eliminar este consultorio?"
@@ -86,194 +346,177 @@ const Clinicas: React.FC = () => {
             </Tooltip>
           </Popconfirm>
         </Space>
-      )
-    }
+      ),
+    },
   ];
 
-  const handleAdd = () => {
-    setEditingClinica(null);
-    form.resetFields();
-    form.setFieldsValue({ estado: 'activo' });
-    if (isMobile) {
-      setDrawerVisible(true);
-    } else {
-      setModalVisible(true);
-    }
-  };
-
-  const handleEdit = (clinica: Clinica) => {
-    setEditingClinica(clinica);
-    form.setFieldsValue(clinica);
-    if (isMobile) {
-      setDrawerVisible(true);
-    } else {
-      setModalVisible(true);
-    }
-  };
-
-  const handleView = (clinica: Clinica) => {
-    setSelectedClinica(clinica);
-    setDrawerVisible(true);
-  };
-
-  const handleDelete = (id: number) => {
-    setClinicas(clinicas.filter(c => c.id !== id));
-    message.success('Consultorio eliminado exitosamente');
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      setLoading(true);
-      
-      if (editingClinica) {
-        setClinicas(clinicas.map(c => c.id === editingClinica.id ? { ...c, ...values } : c));
-        message.success('Consultorio actualizado exitosamente');
-      } else {
-        const newId = Math.max(...clinicas.map(c => c.id), 0) + 1;
-        setClinicas([...clinicas, { ...values, id: newId, pacientes: 0 }]);
-        message.success('Consultorio agregado exitosamente');
-      }
-      
-      setModalVisible(false);
-      setDrawerVisible(false);
-      form.resetFields();
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Formulario compartido para modal y drawer
   const FormContent = () => (
     <Form form={form} layout="vertical">
       <Form.Item
         name="nombre"
         label="Nombre del Consultorio"
-        rules={[{ required: true, message: 'Por favor ingrese el nombre' }]}
+        rules={[{ required: true, message: 'Ingrese el nombre del consultorio' }]}
       >
         <Input placeholder="Ej: Consultorio Médico Matriz" size="large" />
       </Form.Item>
-      
-      <Form.Item
-        name="ubicacion"
-        label="Ubicación"
-        rules={[{ required: true, message: 'Por favor ingrese la ubicación' }]}
-      >
-        <Input placeholder="Ej: Av. Principal #123" size="large" />
-      </Form.Item>
-      
+
       <Form.Item
         name="telefono"
         label="Teléfono"
-        rules={[{ required: true, message: 'Por favor ingrese el teléfono' }]}
+        rules={[{ required: true, message: 'Ingrese el teléfono' }]}
       >
-        <Input placeholder="Ej: 555-1234" size="large" />
+        <Input placeholder="Ej: 2221234567" size="large" />
       </Form.Item>
-      
+
       <Form.Item
-        name="email"
-        label="Correo Electrónico"
+        name="correo"
+        label="Correo electrónico"
         rules={[
-          { required: true, message: 'Por favor ingrese el email' },
-          { type: 'email', message: 'Email inválido' }
+          { required: true, message: 'Ingrese el correo electrónico' },
+          { type: 'email', message: 'Correo inválido' },
         ]}
       >
-        <Input placeholder="Ej: consultorio@medisys.com" size="large" />
+        <Input placeholder="Ej: consultorio@correo.com" size="large" />
       </Form.Item>
-      
+
       <Form.Item
-        name="capacidad"
-        label="Capacidad (máx. pacientes)"
-        rules={[{ required: true, message: 'Por favor ingrese la capacidad' }]}
+        name="entidad"
+        label="Entidad"
+        rules={[{ required: true, message: 'Ingrese la entidad' }]}
       >
-        <InputNumber min={1} max={200} style={{ width: '100%' }} size="large" />
+        <Input placeholder="Ej: Puebla" size="large" />
       </Form.Item>
-      
+
       <Form.Item
-        name="estado"
-        label="Estado"
-        rules={[{ required: true, message: 'Por favor seleccione el estado' }]}
-        initialValue="activo"
+        name="municipio"
+        label="Municipio"
+        rules={[{ required: true, message: 'Ingrese el municipio' }]}
       >
-        <Space.Compact block>
-          <Button
-            type={form.getFieldValue('estado') === 'activo' ? 'primary' : 'default'}
-            onClick={() => form.setFieldsValue({ estado: 'activo' })}
-            style={{ flex: 1 }}
-          >
-            Activo
-          </Button>
-          <Button
-            type={form.getFieldValue('estado') === 'inactivo' ? 'primary' : 'default'}
-            onClick={() => form.setFieldsValue({ estado: 'inactivo' })}
-            style={{ flex: 1 }}
-          >
-            Inactivo
-          </Button>
-        </Space.Compact>
+        <Input placeholder="Ej: Puebla" size="large" />
       </Form.Item>
+
+      <Form.Item
+        name="colonia"
+        label="Colonia"
+        rules={[{ required: true, message: 'Ingrese la colonia' }]}
+      >
+        <Input placeholder="Ej: Centro" size="large" />
+      </Form.Item>
+
+      <Form.Item
+        name="codigo_postal"
+        label="Código postal"
+        rules={[{ required: true, message: 'Ingrese el código postal' }]}
+      >
+        <Input placeholder="Ej: 72000" size="large" />
+      </Form.Item>
+
+      <Form.Item
+        name="calle"
+        label="Calle"
+        rules={[{ required: true, message: 'Ingrese la calle' }]}
+      >
+        <Input placeholder="Ej: Av. Principal" size="large" />
+      </Form.Item>
+
+      <Form.Item
+        name="numero_exterior"
+        label="Número exterior"
+        rules={[{ required: true, message: 'Ingrese el número exterior' }]}
+      >
+        <Input placeholder="Ej: 123" size="large" />
+      </Form.Item>
+
+      <Form.Item
+        name="numero_interior"
+        label="Número interior"
+        rules={[{ required: true, message: 'Ingrese el número interior' }]}
+      >
+        <Input placeholder="Ej: 2A" size="large" />
+      </Form.Item>
+
+      {editingConsultorio && (
+        <Form.Item
+          name="activo"
+          label="Estado"
+          rules={[{ required: true, message: 'Seleccione el estado' }]}
+        >
+          <Select
+            size="large"
+            getPopupContainer={(triggerNode) =>
+              triggerNode.parentElement || document.body
+            }
+            options={[
+              { label: 'Activo', value: true },
+              { label: 'Inactivo', value: false },
+            ]}
+          />
+        </Form.Item>
+      )}
     </Form>
   );
 
-  // Vista de detalles para móvil
   const DetailsView = () => (
     <div className="clinica-details">
       <div className="detail-item">
         <EnvironmentOutlined style={{ color: '#50EBEC', fontSize: 18 }} />
         <div>
-          <div className="detail-label">Ubicación</div>
-          <div className="detail-value">{selectedClinica?.ubicacion}</div>
+          <div className="detail-label">Dirección</div>
+          <div className="detail-value">
+            {selectedConsultorio ? getDireccion(selectedConsultorio) : ''}
+          </div>
         </div>
       </div>
+
       <div className="detail-item">
         <PhoneOutlined style={{ color: '#50EBEC', fontSize: 18 }} />
         <div>
           <div className="detail-label">Teléfono</div>
-          <div className="detail-value">{selectedClinica?.telefono}</div>
+          <div className="detail-value">
+            {selectedConsultorio?.telefono || 'Sin teléfono'}
+          </div>
         </div>
       </div>
+
       <div className="detail-item">
         <MailOutlined style={{ color: '#50EBEC', fontSize: 18 }} />
         <div>
-          <div className="detail-label">Email</div>
-          <div className="detail-value">{selectedClinica?.email}</div>
+          <div className="detail-label">Correo</div>
+          <div className="detail-value">
+            {selectedConsultorio?.correo || 'Sin correo'}
+          </div>
         </div>
       </div>
+
       <div className="detail-row">
         <div className="detail-col">
-          <div className="detail-label">Capacidad</div>
-          <div className="detail-value">{selectedClinica?.capacidad} pacientes</div>
-        </div>
-        <div className="detail-col">
-          <div className="detail-label">Pacientes</div>
-          <div className="detail-value">{selectedClinica?.pacientes}</div>
-        </div>
-        <div className="detail-col">
           <div className="detail-label">Estado</div>
-          <Tag color={selectedClinica?.estado === 'activo' ? 'success' : 'default'} style={{ margin: 0 }}>
-            {selectedClinica?.estado === 'activo' ? 'Activo' : 'Inactivo'}
+          <Tag color={selectedConsultorio?.activo ? 'success' : 'default'} style={{ margin: 0 }}>
+            {selectedConsultorio?.activo ? 'Activo' : 'Inactivo'}
           </Tag>
         </div>
       </div>
+
       <div className="detail-actions">
-        <Button 
-          type="primary" 
-          icon={<EditOutlined />} 
+        <Button
+          type="primary"
+          icon={<EditOutlined />}
           onClick={() => {
+            if (!selectedConsultorio) return;
             setDrawerVisible(false);
-            setTimeout(() => handleEdit(selectedClinica!), 100);
+            setTimeout(() => handleEdit(selectedConsultorio), 100);
           }}
           block
         >
           Editar Consultorio
         </Button>
+
         <Popconfirm
           title="¿Eliminar consultorio?"
           description="¿Estás seguro de eliminar este consultorio?"
           onConfirm={() => {
-            handleDelete(selectedClinica!.id);
+            if (!selectedConsultorio) return;
+            handleDelete(selectedConsultorio.id);
             setDrawerVisible(false);
           }}
           okText="Sí"
@@ -287,48 +530,42 @@ const Clinicas: React.FC = () => {
     </div>
   );
 
-  // Vista de lista para móvil
   const MobileList = () => (
-    <List
-      dataSource={clinicas}
-      renderItem={(item) => (
-        <Card 
-          className="clinica-card-mobile"
-          hoverable
-          onClick={() => handleView(item)}
-        >
-          <div className="clinica-card-header">
-            <Space>
-              <ShopOutlined style={{ color: '#50EBEC', fontSize: 20 }} />
-              <span className="clinica-card-title">{item.nombre}</span>
-            </Space>
-            <Tag color={item.estado === 'activo' ? 'success' : 'default'}>
-              {item.estado === 'activo' ? 'Activo' : 'Inactivo'}
-            </Tag>
-          </div>
-          <div className="clinica-card-info">
-            <div className="info-row">
-              <EnvironmentOutlined style={{ color: '#50EBEC' }} />
-              <span>{item.ubicacion}</span>
+    <Spin spinning={loading}>
+      <div className="clinica-mobile-list">
+        {consultorios.map((item) => (
+          <Card
+            key={item.id}
+            className="clinica-card-mobile"
+            hoverable
+            onClick={() => handleView(item)}
+          >
+            <div className="clinica-card-header">
+              <Space>
+                <ShopOutlined style={{ color: '#50EBEC', fontSize: 20 }} />
+                <span className="clinica-card-title">{item.nombre}</span>
+              </Space>
+
+              <Tag color={item.activo ? 'success' : 'default'}>
+                {item.activo ? 'Activo' : 'Inactivo'}
+              </Tag>
             </div>
-            <div className="info-row">
-              <PhoneOutlined style={{ color: '#50EBEC' }} />
-              <span>{item.telefono}</span>
-            </div>
-            <div className="info-stats">
-              <div className="stat">
-                <span className="stat-label">Pacientes</span>
-                <span className="stat-value">{item.pacientes}</span>
+
+            <div className="clinica-card-info">
+              <div className="info-row">
+                <EnvironmentOutlined style={{ color: '#50EBEC' }} />
+                <span>{getDireccion(item)}</span>
               </div>
-              <div className="stat">
-                <span className="stat-label">Capacidad</span>
-                <span className="stat-value">{item.capacidad}</span>
+
+              <div className="info-row">
+                <PhoneOutlined style={{ color: '#50EBEC' }} />
+                <span>{item.telefono || 'Sin teléfono'}</span>
               </div>
             </div>
-          </div>
-        </Card>
-      )}
-    />
+          </Card>
+        ))}
+      </div>
+    </Spin>
   );
 
   return (
@@ -352,70 +589,89 @@ const Clinicas: React.FC = () => {
         ) : (
           <Table
             columns={columns}
-            dataSource={clinicas}
+            dataSource={consultorios}
             rowKey="id"
-            pagination={{ pageSize: 10, showTotal: (total) => `Total ${total} consultorios` }}
-            scroll={{ x: 1000 }}
+            loading={loading}
+            pagination={{
+              pageSize: 10,
+              showTotal: (total) => `Total ${total} consultorios`,
+            }}
+            scroll={{ x: 1100 }}
           />
         )}
       </Card>
 
-      {/* Modal para Desktop */}
       {!isMobile && (
         <Modal
-          title={editingClinica ? 'Editar Consultorio' : 'Agregar Consultorio'}
+          title={editingConsultorio ? 'Editar Consultorio' : 'Agregar Consultorio'}
           open={modalVisible}
-          onCancel={() => setModalVisible(false)}
+          onCancel={() => {
+            setModalVisible(false);
+            setEditingConsultorio(null);
+            form.resetFields();
+          }}
           onOk={handleSubmit}
           confirmLoading={loading}
-          width={600}
+          width={700}
+          okText={editingConsultorio ? 'Actualizar' : 'Agregar'}
+          cancelText="Cancelar"
+          destroyOnHidden
+          forceRender
         >
           <FormContent />
         </Modal>
       )}
 
-      {/* Drawer para Móvil - Formulario */}
       {isMobile && (
         <Drawer
-          title={editingClinica ? 'Editar Consultorio' : 'Agregar Consultorio'}
+          title={editingConsultorio ? 'Editar Consultorio' : 'Agregar Consultorio'}
           placement="bottom"
-          open={drawerVisible && !selectedClinica}
+          open={drawerVisible && !selectedConsultorio}
           onClose={() => {
             setDrawerVisible(false);
-            setSelectedClinica(null);
+            setEditingConsultorio(null);
+            setSelectedConsultorio(null);
             form.resetFields();
           }}
-          height="auto"
+          size="large"
           className="clinica-drawer"
+          destroyOnHidden
         >
           <FormContent />
+
           <div className="drawer-actions">
-            <Button onClick={() => {
-              setDrawerVisible(false);
-              setSelectedClinica(null);
-            }} block>
+            <Button
+              onClick={() => {
+                setDrawerVisible(false);
+                setEditingConsultorio(null);
+                setSelectedConsultorio(null);
+                form.resetFields();
+              }}
+              block
+            >
               Cancelar
             </Button>
+
             <Button type="primary" onClick={handleSubmit} loading={loading} block>
-              {editingClinica ? 'Actualizar' : 'Agregar'}
+              {editingConsultorio ? 'Actualizar' : 'Agregar'}
             </Button>
           </div>
         </Drawer>
       )}
 
-      {/* Drawer para Móvil - Detalles */}
       {isMobile && (
         <Drawer
-          title={selectedClinica?.nombre}
+          title={selectedConsultorio?.nombre}
           placement="bottom"
-          open={drawerVisible && !!selectedClinica}
+          open={drawerVisible && !!selectedConsultorio}
           onClose={() => {
             setDrawerVisible(false);
-            setSelectedClinica(null);
+            setSelectedConsultorio(null);
           }}
-          height="auto"
+          size="default"
           className="clinica-drawer"
           closeIcon={<CloseOutlined />}
+          destroyOnHidden
         >
           <DetailsView />
         </Drawer>
@@ -424,4 +680,4 @@ const Clinicas: React.FC = () => {
   );
 };
 
-export default Clinicas;
+export default Consultorios;
