@@ -438,39 +438,35 @@ const Dashboard: React.FC = () => {
         </div>
 
         <Spin spinning={loading}>
-          <Row gutter={[16, 16]} className="stats-row">
-            {globalStats.map((stat, index) => (
-              <Col xs={12} sm={12} md={8} lg={index === 4 ? 24 : 6} xl={index === 4 ? 4 : 5} key={stat.title}>
-                <Card className="stat-card-modern" hoverable>
-                  <div
-                    className="stat-icon"
-                    style={{
-                      background: `${stat.color}15`,
-                      color: stat.color,
-                    }}
-                  >
-                    {stat.icon}
-                  </div>
+          <div className="stats-grid">
+  {globalStats.map((stat) => (
+    <Card className="stat-card-modern" hoverable key={stat.title}>
+      <div
+        className="stat-icon"
+        style={{
+          background: `${stat.color}15`,
+          color: stat.color,
+        }}
+      >
+        {stat.icon}
+      </div>
 
-                  <div className="stat-content">
-                    <Text type="secondary" className="stat-title">
-                      {stat.title}
-                    </Text>
+      <div className="stat-content">
+        <Text type="secondary" className="stat-title">
+          {stat.title}
+        </Text>
 
-                    <Title level={isMobile ? 4 : 3} className="stat-value">
-                      {Number(stat.value).toLocaleString('es-MX')}
-                    </Title>
+        <Title level={3} className="stat-value">
+          {Number(stat.value).toLocaleString('es-MX')}
+        </Title>
 
-                    <div className="stat-trend">
-                      <Text style={{ fontSize: 11, color: '#2BA1A2', fontWeight: 600 }}>
-                        {stat.subtitle}
-                      </Text>
-                    </div>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+        <Text className="stat-trend">
+          {stat.subtitle}
+        </Text>
+      </div>
+    </Card>
+  ))}
+</div>
 
           <Row gutter={[16, 16]} className="bottom-row">
             <Col xs={24} lg={12}>

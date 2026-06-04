@@ -30,6 +30,8 @@ import {
   PhoneOutlined,
   CheckCircleOutlined,
   ShopOutlined,
+  IdcardOutlined,
+  MedicineBoxOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import userService, { type UserData } from '../../services/user/user.service';
@@ -105,7 +107,6 @@ const Usuarios: React.FC = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-
     try {
       const data = await userService.getUsuarios(1, 100);
       setUsers(data);
@@ -119,10 +120,7 @@ const Usuarios: React.FC = () => {
   const fetchSucursales = async () => {
     try {
       const response = await axiosInstance.get('/sucursales', {
-        params: {
-          page: 1,
-          limit: 100,
-        },
+        params: { page: 1, limit: 100 },
       });
 
       const data = response.data?.data?.data || [];
@@ -151,12 +149,8 @@ const Usuarios: React.FC = () => {
       content: (
         <div>
           <p>¿Estás seguro de que deseas eliminar este usuario?</p>
-          <p>
-            <strong>Usuario:</strong> {usuario.nombre} {usuario.primer_apellido}
-          </p>
-          <p>
-            <strong>Email:</strong> {usuario.email}
-          </p>
+          <p><strong>Usuario:</strong> {usuario.nombre} {usuario.primer_apellido}</p>
+          <p><strong>Email:</strong> {usuario.email}</p>
           <Text type="danger">Esta acción no se puede deshacer.</Text>
         </div>
       ),
@@ -178,12 +172,12 @@ const Usuarios: React.FC = () => {
   const handleCreate = () => {
     setEditingUser(null);
     form.resetFields();
-
     form.setFieldsValue({
       rol_id: 2,
       sucursal_id: undefined,
+      cedula_profesional: '',
+      especialidad: '',
     });
-
     setModalVisible(true);
   };
 
@@ -194,10 +188,12 @@ const Usuarios: React.FC = () => {
       nombre: usuario.nombre,
       primer_apellido: usuario.primer_apellido,
       segundo_apellido: usuario.segundo_apellido,
-      email: usuario.email,
+      correo: usuario.email,
       telefono: usuario.telefono,
       rol_id: usuario.rol_id,
       sucursal_id: usuario.sucursal_id || undefined,
+      cedula_profesional: usuario.cedula_profesional || '',
+      especialidad: usuario.especialidad || '',
     });
 
     setModalVisible(true);
@@ -205,12 +201,8 @@ const Usuarios: React.FC = () => {
 
   const handleViewDetails = (usuario: UserData) => {
     setSelectedUser(usuario);
-
-    if (isMobile) {
-      setDetailDrawerVisible(true);
-    } else {
-      setDetailModalVisible(true);
-    }
+    if (isMobile) setDetailDrawerVisible(true);
+    else setDetailModalVisible(true);
   };
 
   const handleSubmit = async () => {
@@ -218,17 +210,23 @@ const Usuarios: React.FC = () => {
       const values = await form.validateFields();
 
       const submitData = {
-        ...values,
+        nombre: values.nombre,
+        primer_apellido: values.primer_apellido,
+        segundo_apellido: values.segundo_apellido || '',
+        email: values.correo,
+        password: values.password,
         telefono: values.telefono || '',
-        empresa_id: user?.empresa_id,
-        sucursal_id: values.rol_id === 1 ? null : values.sucursal_id,
+        rol_id: values.rol_id,
+        sucursal_id: values.rol_id === 1 ? null : Number(values.sucursal_id),
+        cedula_profesional: values.rol_id === 2 ? values.cedula_profesional || '' : '',
+        especialidad: values.rol_id === 2 ? values.especialidad || '' : '',
       };
 
       if (editingUser) {
         await userService.updateUsuario(editingUser.id!, submitData);
         message.success('Usuario actualizado exitosamente');
       } else {
-        await userService.createUsuario(submitData);
+        await userService.createUsuario(submitData as any);
         message.success('Usuario creado exitosamente');
       }
 
@@ -256,7 +254,6 @@ const Usuarios: React.FC = () => {
       }
 
       await userService.changePassword(selectedUserId!, {
-        password: values.newPassword,
         newPassword: values.newPassword,
       });
 
@@ -272,120 +269,93 @@ const Usuarios: React.FC = () => {
     return fullText.includes(searchText.toLowerCase());
   });
 
-const columns: ColumnsType<UserData> = [
-  {
-    title: 'ID',
-    dataIndex: 'id',
-    key: 'id',
-    width: 60,
-    align: 'center',
-  },
-  {
-    title: 'Usuario',
-    key: 'nombre',
-    render: (_, record) => (
-      <Space>
-        <Avatar icon={<UserOutlined />} className="user-avatar" />
-        <span>
-          {record.nombre} {record.primer_apellido}
-        </span>
-      </Space>
-    ),
-  },
-  {
-    title: 'Email',
-    dataIndex: 'email',
-    key: 'email',
-    ellipsis: true,
-  },
-  {
-    title: 'Consultorio',
-    dataIndex: 'sucursal_id',
-    key: 'sucursal_id',
-    ellipsis: true,
-    render: (sucursalId, record) =>
-      record.rol_id === 1 ? '-' : getSucursalName(sucursalId),
-  },
-  {
-    title: 'Teléfono',
-    dataIndex: 'telefono',
-    key: 'telefono',
-    width: 120,
-    align: 'center',
-    responsive: ['xl'],
-    render: (telefono) => (
-      <span className="telefono-nowrap">
-        {telefono || '-'}
-      </span>
-    ),
-  },
-  {
-    title: 'Rol',
-    dataIndex: 'rol_id',
-    key: 'rol_id',
-    width: 120,
-    align: 'center',
-    render: (rolId) => (
-      <Tag className="rol-tag" color={getRolColor(rolId)}>
-        {getRolName(rolId)}
-      </Tag>
-    ),
-  },
-  {
-    title: 'Estado',
-    dataIndex: 'activo',
-    key: 'activo',
-    width: 100,
-    align: 'center',
-    render: (activo) => (
-      <Tag color={activo ? 'green' : 'red'}>
-        {activo ? 'Activo' : 'Inactivo'}
-      </Tag>
-    ),
-  },
-  {
-    title: 'Acciones',
-    key: 'actions',
-    width: 220,
-    align: 'center',
-    render: (_, record) => (
-      <Space size="small">
-        <Tooltip title="Ver detalles">
-          <Button
-            type="link"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetails(record)}
-          />
-        </Tooltip>
+  const columns: ColumnsType<UserData> = [
+    {
+      title: 'ID',
+      dataIndex: 'id',
+      width: 60,
+      align: 'center',
+    },
+    {
+      title: 'Usuario',
+      key: 'nombre',
+      render: (_, record) => (
+        <Space>
+          <Avatar icon={<UserOutlined />} className="user-avatar" />
+          <span>{record.nombre} {record.primer_apellido}</span>
+        </Space>
+      ),
+    },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      ellipsis: true,
+    },
+    {
+      title: 'Consultorio',
+      dataIndex: 'sucursal_id',
+      ellipsis: true,
+      render: (sucursalId, record) =>
+        record.rol_id === 1 ? '-' : getSucursalName(sucursalId),
+    },
+    {
+      title: 'Teléfono',
+      dataIndex: 'telefono',
+      width: 120,
+      align: 'center',
+      responsive: ['xl'],
+      render: (telefono) => (
+        <span className="telefono-nowrap">{telefono || '-'}</span>
+      ),
+    },
+    {
+      title: 'Rol',
+      dataIndex: 'rol_id',
+      width: 120,
+      align: 'center',
+      render: (rolId) => (
+        <Tag className="rol-tag" color={getRolColor(rolId)}>
+          {getRolName(rolId)}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Estado',
+      dataIndex: 'activo',
+      width: 100,
+      align: 'center',
+      render: (activo) => (
+        <Tag color={activo ? 'green' : 'red'}>
+          {activo ? 'Activo' : 'Inactivo'}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Acciones',
+      key: 'actions',
+      width: 220,
+      align: 'center',
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="Ver detalles">
+            <Button type="link" icon={<EyeOutlined />} onClick={() => handleViewDetails(record)} />
+          </Tooltip>
 
-        <Tooltip title="Editar">
-          <Button
-            type="link"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          />
-        </Tooltip>
+          <Tooltip title="Editar">
+            <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          </Tooltip>
 
-        <Tooltip title="Contraseña">
-          <Button
-            type="link"
-            icon={<LockOutlined />}
-            onClick={() => handleOpenPasswordModal(record.id!)}
-          />
-        </Tooltip>
+          <Tooltip title="Contraseña">
+            <Button type="link" icon={<LockOutlined />} onClick={() => handleOpenPasswordModal(record.id!)} />
+          </Tooltip>
 
-        <Tooltip title="Eliminar">
-          <Button
-            type="link"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => showDeleteConfirm(record)}
-          />
-        </Tooltip>
-      </Space>
-    ),
-  },
-];
+          <Tooltip title="Eliminar">
+            <Button type="link" danger icon={<DeleteOutlined />} onClick={() => showDeleteConfirm(record)} />
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
 
   const UserDetailContent = () => {
     if (!selectedUser) return null;
@@ -395,9 +365,7 @@ const columns: ColumnsType<UserData> = [
         <div className="user-detail-header">
           <Avatar size={80} icon={<UserOutlined />} className="user-detail-avatar" />
 
-          <h2>
-            {selectedUser.nombre} {selectedUser.primer_apellido}
-          </h2>
+          <h2>{selectedUser.nombre} {selectedUser.primer_apellido}</h2>
 
           <Tag color={getRolColor(selectedUser.rol_id)} className="user-role-tag">
             {getRolName(selectedUser.rol_id)}
@@ -429,6 +397,30 @@ const columns: ColumnsType<UserData> = [
                 <div className="detail-value">{getSucursalName(selectedUser.sucursal_id)}</div>
               </div>
             </div>
+          )}
+
+          {selectedUser.rol_id === 2 && (
+            <>
+              <div className="user-detail-row">
+                <IdcardOutlined />
+                <div>
+                  <div className="detail-label">Cédula Profesional</div>
+                  <div className="detail-value">
+                    {selectedUser.cedula_profesional || 'No registrada'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="user-detail-row">
+                <MedicineBoxOutlined />
+                <div>
+                  <div className="detail-label">Especialidad</div>
+                  <div className="detail-value">
+                    {selectedUser.especialidad || 'No registrada'}
+                  </div>
+                </div>
+              </div>
+            </>
           )}
 
           <div className="user-detail-row">
@@ -554,6 +546,18 @@ const columns: ColumnsType<UserData> = [
                           <ShopOutlined /> {getSucursalName(usuario.sucursal_id)}
                         </div>
                       )}
+
+                      {usuario.rol_id === 2 && (
+                        <>
+                          <div className="mobile-user-info">
+                            <IdcardOutlined /> {usuario.cedula_profesional || 'Sin cédula'}
+                          </div>
+
+                          <div className="mobile-user-info">
+                            <MedicineBoxOutlined /> {usuario.especialidad || 'Sin especialidad'}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </Space>
 
@@ -614,15 +618,15 @@ const columns: ColumnsType<UserData> = [
           </Form.Item>
 
           <Form.Item
-            name="email"
-            label="Email"
+            name="correo"
+            label="Correo"
             rules={[{ required: true, type: 'email', message: 'Ingrese un email válido' }]}
           >
             <Input placeholder="ejemplo@correo.com" size="large" />
           </Form.Item>
 
           <Form.Item name="telefono" label="Teléfono">
-            <Input placeholder="Ej: 555-1234" size="large" />
+            <Input placeholder="Ej: 5551234567" size="large" />
           </Form.Item>
 
           <Form.Item name="rol_id" label="Rol" rules={[{ required: true, message: 'Seleccione un rol' }]}>
@@ -638,7 +642,18 @@ const columns: ColumnsType<UserData> = [
               size="large"
               onChange={(e) => {
                 if (e.target.value === 1) {
-                  form.setFieldsValue({ sucursal_id: undefined });
+                  form.setFieldsValue({
+                    sucursal_id: undefined,
+                    cedula_profesional: '',
+                    especialidad: '',
+                  });
+                }
+
+                if (e.target.value === 3) {
+                  form.setFieldsValue({
+                    cedula_profesional: '',
+                    especialidad: '',
+                  });
                 }
               }}
             />
@@ -659,6 +674,26 @@ const columns: ColumnsType<UserData> = [
                 }))}
               />
             </Form.Item>
+          )}
+
+          {rolSeleccionado === 2 && (
+            <>
+              <Form.Item
+                name="cedula_profesional"
+                label="Cédula Profesional"
+                rules={[{ required: true, message: 'Ingrese la cédula profesional' }]}
+              >
+                <Input placeholder="Ej: 1234567890" size="large" />
+              </Form.Item>
+
+              <Form.Item
+                name="especialidad"
+                label="Especialidad"
+                rules={[{ required: true, message: 'Ingrese la especialidad' }]}
+              >
+                <Input placeholder="Ej: Cardiología" size="large" />
+              </Form.Item>
+            </>
           )}
 
           {!editingUser && (
