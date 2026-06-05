@@ -12,6 +12,7 @@ import Login from '../pages/Auth/Login';
 
 import Dashboard from '../pages/Dashboard/Dashboard';
 import DashboardMedico from '../pages/DashboardMedico/DashboardMedico';
+import DashboardConsultor from '../pages/DashboardConsultor/DashboardConsultor';
 
 import Clinicas from '../pages/clinicas/Clinicas';
 import Usuarios from '../pages/Usuarios/Usuarios';
@@ -47,18 +48,11 @@ const AppRouter: React.FC = () => {
       <AuthProvider>
         <AntdApp>
           <Routes>
-
-            {/* =====================
-                RUTAS PÚBLICAS
-            ===================== */}
             <Route element={<PublicLayout />}>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Navigate to="/login" replace />} />
             </Route>
 
-            {/* =====================
-                RUTAS PRIVADAS
-            ===================== */}
             <Route
               element={
                 <ProtectedRoute>
@@ -66,47 +60,22 @@ const AppRouter: React.FC = () => {
                 </ProtectedRoute>
               }
             >
-              {/* Dashboard Admin */}
-              <Route
-                path="/dashboard"
-                element={<Dashboard />}
-              />
+              <Route path="/dashboard" element={<Dashboard />} />
 
-              {/* Dashboard Médico */}
-              <Route
-                path="/dashboard-medico"
-                element={<DashboardMedico />}
-              />
+              <Route path="/dashboard-medico" element={<DashboardMedico />} />
 
-              {/* Usuarios */}
-              <Route
-                path="/usuarios"
-                element={<Usuarios />}
-              />
+              <Route path="/dashboard-consultor" element={<DashboardConsultor />} />
 
-              {/* Consultorios */}
-              <Route
-                path="/clinicas"
-                element={<Clinicas />}
-              />
+              <Route path="/usuarios" element={<Usuarios />} />
 
-              <Route
-                path="/clinicas/nueva"
-                element={<Clinicas />}
-              />
+              <Route path="/clinicas" element={<Clinicas />} />
 
-              <Route
-                path="/clinicas/:id"
-                element={<Clinicas />}
-              />
+              <Route path="/clinicas/nueva" element={<Clinicas />} />
 
-              {/* Ruta por defecto */}
-              <Route
-                path="*"
-                element={<Navigate to="/dashboard" replace />}
-              />
+              <Route path="/clinicas/:id" element={<Clinicas />} />
+
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
-
           </Routes>
         </AntdApp>
       </AuthProvider>

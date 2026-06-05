@@ -82,7 +82,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      await login(values.email, values.password);
+      const loginResponse = await login(values.email, values.password);
 
       if (values.remember) {
         localStorage.setItem('remember_me', 'true');
@@ -92,7 +92,10 @@ const Login: React.FC = () => {
         localStorage.removeItem('remembered_email');
       }
 
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const user = JSON.parse(
+        localStorage.getItem('user') || '{}'
+      );
+
       const redirectPath = getRedirectByRole(user?.rol_id);
 
       message.success({
@@ -104,6 +107,8 @@ const Login: React.FC = () => {
 
       navigate(redirectPath, { replace: true });
     } catch (error: any) {
+      console.error('ERROR LOGIN:', error);
+
       message.error({
         content: getErrorMessage(error),
         duration: 4,

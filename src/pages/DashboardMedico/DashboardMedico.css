@@ -13,6 +13,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  gap: 16px;
 }
 
 .doctor-title {
@@ -21,24 +22,37 @@
   font-weight: 700 !important;
 }
 
-.primary-medical-btn {
-  background: linear-gradient(
-    135deg,
-    #5fd9da 0%,
-    #45c5c6 100%
-  ) !important;
+.doctor-header-actions {
+  flex-shrink: 0;
+}
 
+.primary-medical-btn {
+  height: 40px;
+  background: linear-gradient(135deg, #5fd9da 0%, #45c5c6 100%) !important;
   border: none !important;
   border-radius: 12px !important;
-
   color: white !important;
-  font-weight: 600;
-
+  font-weight: 700;
   box-shadow: 0 6px 18px rgba(69, 197, 198, 0.18);
+  transition: all 0.25s ease;
 }
 
 .primary-medical-btn:hover {
   transform: translateY(-2px);
+}
+
+.secondary-medical-btn {
+  height: 40px;
+  border-radius: 12px !important;
+  border-color: #dff4f4 !important;
+  color: #1a6b6c !important;
+  font-weight: 700;
+}
+
+.secondary-medical-btn:hover {
+  background: #f4fbfb !important;
+  border-color: #5fd9da !important;
+  color: #1a6b6c !important;
 }
 
 /* ==========================================
@@ -48,11 +62,8 @@
 .doctor-stat-card {
   border-radius: 18px !important;
   border: 1px solid #edf7f7 !important;
-
   box-shadow: 0 4px 16px rgba(15, 76, 77, 0.05);
-
-  transition: all .25s ease;
-
+  transition: all 0.25s ease;
   height: 170px;
 }
 
@@ -65,27 +76,20 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-
   height: 100%;
   gap: 12px;
-
   padding: 20px !important;
 }
 
 .doctor-stat-icon {
   width: 52px;
   height: 52px;
-
   border-radius: 14px;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   background: #f4fbfb;
-
   color: #38b7b8;
-
   font-size: 24px;
 }
 
@@ -106,11 +110,28 @@
 }
 
 /* ==========================================
-   FILAS
+   FILAS Y ALTURAS IGUALES
 ========================================== */
 
 .doctor-main-row {
   margin-top: 18px;
+}
+
+.equal-row {
+  align-items: stretch;
+}
+
+.equal-row .ant-col {
+  display: flex;
+}
+
+.equal-card {
+  width: 100%;
+  height: 100%;
+}
+
+.equal-card .ant-card-body {
+  height: calc(100% - 57px);
 }
 
 /* ==========================================
@@ -120,7 +141,6 @@
 .doctor-card {
   border-radius: 20px !important;
   border: 1px solid #edf7f7 !important;
-
   box-shadow: 0 4px 16px rgba(15, 76, 77, 0.05);
 }
 
@@ -155,46 +175,8 @@
 }
 
 .patient-avatar {
-  background: linear-gradient(
-    135deg,
-    #5fd9da 0%,
-    #45c5c6 100%
-  );
-
+  background: linear-gradient(135deg, #5fd9da 0%, #45c5c6 100%);
   color: white;
-}
-
-/* ==========================================
-   PENDIENTES
-========================================== */
-
-.pending-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pending-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  background: #fbfefe;
-
-  border: 1px solid #edf7f7;
-
-  border-radius: 14px;
-
-  padding: 14px 16px;
-}
-
-.pending-item span {
-  color: #64748b;
-}
-
-.pending-item strong {
-  color: #1e293b;
-  font-size: 18px;
 }
 
 /* ==========================================
@@ -204,7 +186,9 @@
 .week-chart {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 16px;
+  height: 100%;
 }
 
 .week-item {
@@ -225,11 +209,7 @@
 }
 
 .week-item .ant-progress-bg {
-  background: linear-gradient(
-    90deg,
-    #5fd9da 0%,
-    #45c5c6 100%
-  ) !important;
+  background: linear-gradient(90deg, #5fd9da 0%, #45c5c6 100%) !important;
 }
 
 /* ==========================================
@@ -239,20 +219,18 @@
 .recent-patients {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 12px;
+  height: 100%;
 }
 
 .recent-patient-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   background: #fbfefe;
-
   border: 1px solid #edf7f7;
-
   border-radius: 14px;
-
   padding: 14px;
 }
 
@@ -272,24 +250,34 @@
 ========================================== */
 
 .doctor-actions-card {
-  margin-top: 18px;
+  margin-top: 0;
 }
 
-.doctor-actions-card .ant-btn {
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-content: center;
+  height: 100%;
+}
+
+.quick-actions-grid .ant-btn {
   height: 46px;
   border-radius: 12px;
-
-  font-weight: 600;
-
+  font-weight: 700;
   border-color: #dff4f4;
-
   color: #1a6b6c;
 }
 
-.doctor-actions-card .ant-btn:hover {
+.quick-actions-grid .ant-btn:hover {
   background: #f4fbfb !important;
   border-color: #5fd9da !important;
   color: #1a6b6c !important;
+}
+
+.quick-main-action {
+  background: #fbfefe;
+  border-color: #bfeeee !important;
 }
 
 /* ==========================================
@@ -297,11 +285,19 @@
 ========================================== */
 
 @media (max-width: 768px) {
-
   .doctor-header {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
+  }
+
+  .doctor-header-actions {
+    width: 100%;
+  }
+
+  .doctor-header-actions .ant-space-item,
+  .doctor-header-actions .ant-btn {
+    width: 100%;
   }
 
   .doctor-title {
@@ -326,7 +322,15 @@
     padding: 14px;
   }
 
+  .equal-card .ant-card-body {
+    height: auto;
+  }
+
   .week-item {
     grid-template-columns: 40px 1fr 35px;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
   }
 }

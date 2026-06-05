@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   App,
   Card,
@@ -84,6 +85,7 @@ const Consultorios: React.FC = () => {
   const [form] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.md;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const getDireccion = (item: Consultorio) =>
     `${item.calle} ${item.numero_exterior}${
@@ -159,6 +161,18 @@ const Consultorios: React.FC = () => {
     else setModalVisible(true);
   };
 
+  useEffect(() => {
+    const nuevo = searchParams.get('nuevo');
+
+    if (nuevo === '1') {
+      handleAdd();
+
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('nuevo');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, isMobile]);
+
   const handleEdit = (consultorio: Consultorio) => {
     setEditingConsultorio(consultorio);
     setSelectedConsultorio(null);
@@ -187,20 +201,54 @@ const Consultorios: React.FC = () => {
     setDrawerVisible(true);
   };
 
-  const handleDelete = async (id: number) => {
-    setLoading(true);
+const handleDelete = async (consultorio: Consultorio) => {
+  Modal.confirm({
+    title: '¿Desactivar consultorio?',
+    content: 'El consultorio no se eliminará, solo cambiará a estado inactivo.',
+    centered: true,
+    okText: 'Sí, desactivar',
+    cancelText: 'Cancelar',
+    okButtonProps: {
+      danger: true,
+    },
+    async onOk() {
+      setLoading(true);
 
-    try {
-      await axiosInstance.delete(`/sucursales/${id}`);
-      message.success('Consultorio eliminado correctamente');
-      fetchConsultorios();
-    } catch (error: any) {
-      console.error('ERROR DELETE SUCURSAL:', error?.response?.data || error);
-      message.error(getErrorMessage(error, 'No fue posible eliminar el consultorio'));
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        await axiosInstance.patch(`/sucursales/${consultorio.id}`, {
+          activo: false,
+        });
+
+        message.success('Consultorio marcado como inactivo correctamente');
+
+        setConsultorios((prev) =>
+          prev.map((item) =>
+            item.id === consultorio.id
+              ? {
+                  ...item,
+                  activo: false,
+                }
+              : item
+          )
+        );
+
+        setSelectedConsultorio((prev) =>
+          prev && prev.id === consultorio.id
+            ? {
+                ...prev,
+                activo: false,
+              }
+            : prev
+        );
+      } catch (error: any) {
+        console.error('ERROR DESACTIVAR SUCURSAL:', error?.response?.data || error);
+        message.error(getErrorMessage(error, 'No fue posible desactivar el consultorio'));
+      } finally {
+        setLoading(false);
+      }
+    },
+  });
+};
 
   const handleSubmit = async () => {
     try {
@@ -303,26 +351,17 @@ const Consultorios: React.FC = () => {
       width: 115,
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="Editar">
-            <Button
-              className="action-btn edit-btn"
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-            />
-          </Tooltip>
-
-          <Popconfirm
-            title="¿Eliminar consultorio?"
-            description="¿Estás seguro de eliminar este consultorio?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Sí"
-            cancelText="No"
-          >
-            <Tooltip title="Eliminar">
-              <Button className="action-btn delete-btn" type="text" icon={<DeleteOutlined />} />
-            </Tooltip>
-          </Popconfirm>
+        
+            <Tooltip title="Desactivar">
+  <Button
+    className="action-btn delete-btn"
+    type="text"
+    icon={<DeleteOutlined />}
+    disabled={!record.activo}
+    onClick={() => handleDelete(record)}
+  />
+</Tooltip>
+       
         </Space>
       ),
     },
@@ -468,21 +507,20 @@ const Consultorios: React.FC = () => {
           Editar Consultorio
         </Button>
 
-        <Popconfirm
-          title="¿Eliminar consultorio?"
-          description="¿Estás seguro de eliminar este consultorio?"
-          onConfirm={() => {
-            if (!selectedConsultorio) return;
-            handleDelete(selectedConsultorio.id);
-            setDrawerVisible(false);
-          }}
-          okText="Sí"
-          cancelText="No"
-        >
-          <Button danger icon={<DeleteOutlined />} block>
-            Eliminar Consultorio
+        
+          <Button
+            danger
+            icon={<DeleteOutlined />}
+            block
+            disabled={!selectedConsultorio?.activo}
+            onClick={() => {
+              if (!selectedConsultorio) return;
+              handleDelete(selectedConsultorio);
+              setDrawerVisible(false);
+            }}
+          >
+            Desactivar Consultorio
           </Button>
-        </Popconfirm>
       </div>
     </div>
   );

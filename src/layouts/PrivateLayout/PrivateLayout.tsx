@@ -28,6 +28,7 @@ import {
   TeamOutlined,
   ProfileOutlined,
   DownOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
@@ -46,7 +47,7 @@ const PrivateLayout: React.FC = () => {
   const location = useLocation();
   const { message, modal } = App.useApp();
 
-  const menuItems = [
+  const menuAdmin = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/clinicas', icon: <ShopOutlined />, label: 'Consultorios' },
     { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuarios' },
@@ -56,6 +57,38 @@ const PrivateLayout: React.FC = () => {
     { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
     { key: '/configuracion', icon: <SettingOutlined />, label: 'Configuración' },
   ];
+
+  const menuMedico = [
+    { key: '/dashboard-medico', icon: <DashboardOutlined />, label: 'Dashboard' },
+    { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
+    { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
+    { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
+    { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
+    { key: '/configuracion', icon: <SettingOutlined />, label: 'Configuración' },
+  ];
+
+  const menuConsultor = [
+    { key: '/dashboard-consultor', icon: <EyeOutlined />, label: 'Dashboard' },
+    { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
+    { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
+    { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
+    { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
+  ];
+
+  const getMenuItems = () => {
+    switch (user?.rol_id) {
+      case 1:
+        return menuAdmin;
+      case 2:
+        return menuMedico;
+      case 3:
+        return menuConsultor;
+      default:
+        return menuConsultor;
+    }
+  };
+
+  const menuItems = getMenuItems();
 
   const handleLogout = () => {
     try {
@@ -91,6 +124,8 @@ const PrivateLayout: React.FC = () => {
         return 'Administrador';
       case 2:
         return 'Médico';
+      case 3:
+        return 'Consultor';
       default:
         return 'Usuario';
     }
@@ -102,11 +137,15 @@ const PrivateLayout: React.FC = () => {
       icon: <ProfileOutlined />,
       label: 'Mi perfil',
     },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Configuración',
-    },
+    ...(user?.rol_id !== 3
+      ? [
+          {
+            key: 'settings',
+            icon: <SettingOutlined />,
+            label: 'Configuración',
+          },
+        ]
+      : []),
     {
       type: 'divider' as const,
     },
@@ -157,7 +196,7 @@ const PrivateLayout: React.FC = () => {
           selectedKeys={[location.pathname]}
           items={menuItems}
           className="custom-menu"
-          onClick={({ key }) => navigate(key)}
+          onClick={({ key }) => handleMenuClick(key)}
         />
       </Sider>
 

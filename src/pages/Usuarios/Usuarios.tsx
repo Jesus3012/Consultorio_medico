@@ -81,7 +81,7 @@ const Usuarios: React.FC = () => {
       case 2:
         return 'Médico';
       case 3:
-        return 'Consultor';
+        return 'Auditor';
       default:
         return 'Usuario';
     }
@@ -107,6 +107,7 @@ const Usuarios: React.FC = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
+
     try {
       const data = await userService.getUsuarios(1, 100);
       setUsers(data);
@@ -142,28 +143,53 @@ const Usuarios: React.FC = () => {
     fetchSucursales();
   }, [user?.empresa_id]);
 
-  const showDeleteConfirm = (usuario: UserData) => {
+  const showDeactivateConfirm = (usuario: UserData) => {
     modal.confirm({
-      title: 'Eliminar Usuario',
-      icon: <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />,
+      title: '¿Desactivar usuario?',
+      icon: <ExclamationCircleOutlined style={{ color: '#faad14' }} />,
+      centered: true,
       content: (
         <div>
-          <p>¿Estás seguro de que deseas eliminar este usuario?</p>
-          <p><strong>Usuario:</strong> {usuario.nombre} {usuario.primer_apellido}</p>
-          <p><strong>Email:</strong> {usuario.email}</p>
-          <Text type="danger">Esta acción no se puede deshacer.</Text>
+          <p>El usuario no se eliminará, solo cambiará a estado inactivo.</p>
+          <p>
+            <strong>Usuario:</strong> {usuario.nombre} {usuario.primer_apellido}
+          </p>
+          <p>
+            <strong>Email:</strong> {usuario.email}
+          </p>
         </div>
       ),
-      okText: 'Sí, eliminar',
+      okText: 'Sí, desactivar',
       okType: 'danger',
       cancelText: 'Cancelar',
       onOk: async () => {
         try {
           await userService.deleteUsuario(usuario.id!);
-          message.success('Usuario eliminado exitosamente');
-          fetchUsers();
-        } catch (error) {
-          message.error('Error al eliminar usuario');
+
+          message.success('Usuario desactivado correctamente');
+
+          setUsers((prev) =>
+            prev.map((item) =>
+              item.id === usuario.id
+                ? {
+                    ...item,
+                    activo: false,
+                  }
+                : item
+            )
+          );
+
+          setSelectedUser((prev) =>
+            prev && prev.id === usuario.id
+              ? {
+                  ...prev,
+                  activo: false,
+                }
+              : prev
+          );
+        } catch (error: any) {
+          console.error('ERROR DESACTIVAR USUARIO:', error?.response?.data || error);
+          message.error('Error al desactivar usuario');
         }
       },
     });
@@ -194,6 +220,7 @@ const Usuarios: React.FC = () => {
       sucursal_id: usuario.sucursal_id || undefined,
       cedula_profesional: usuario.cedula_profesional || '',
       especialidad: usuario.especialidad || '',
+      activo: usuario.activo,
     });
 
     setModalVisible(true);
@@ -220,6 +247,7 @@ const Usuarios: React.FC = () => {
         sucursal_id: values.rol_id === 1 ? null : Number(values.sucursal_id),
         cedula_profesional: values.rol_id === 2 ? values.cedula_profesional || '' : '',
         especialidad: values.rol_id === 2 ? values.especialidad || '' : '',
+        activo: editingUser ? values.activo : true,
       };
 
       if (editingUser) {
@@ -282,7 +310,9 @@ const Usuarios: React.FC = () => {
       render: (_, record) => (
         <Space>
           <Avatar icon={<UserOutlined />} className="user-avatar" />
-          <span>{record.nombre} {record.primer_apellido}</span>
+          <span>
+            {record.nombre} {record.primer_apellido}
+          </span>
         </Space>
       ),
     },
@@ -349,8 +379,14 @@ const Usuarios: React.FC = () => {
             <Button type="link" icon={<LockOutlined />} onClick={() => handleOpenPasswordModal(record.id!)} />
           </Tooltip>
 
-          <Tooltip title="Eliminar">
-            <Button type="link" danger icon={<DeleteOutlined />} onClick={() => showDeleteConfirm(record)} />
+          <Tooltip title={record.activo ? 'Desactivar' : 'Usuario inactivo'}>
+            <Button
+              type="link"
+              danger
+              icon={<DeleteOutlined />}
+              disabled={!record.activo}
+              onClick={() => showDeactivateConfirm(record)}
+            />
           </Tooltip>
         </Space>
       ),
@@ -365,7 +401,9 @@ const Usuarios: React.FC = () => {
         <div className="user-detail-header">
           <Avatar size={80} icon={<UserOutlined />} className="user-detail-avatar" />
 
-          <h2>{selectedUser.nombre} {selectedUser.primer_apellido}</h2>
+          <h2>
+            {selectedUser.nombre} {selectedUser.primer_apellido}
+          </h2>
 
           <Tag color={getRolColor(selectedUser.rol_id)} className="user-role-tag">
             {getRolName(selectedUser.rol_id)}
@@ -463,14 +501,15 @@ const Usuarios: React.FC = () => {
           <Button
             danger
             icon={<DeleteOutlined />}
+            disabled={!selectedUser.activo}
             onClick={() => {
               setDetailModalVisible(false);
               setDetailDrawerVisible(false);
-              showDeleteConfirm(selectedUser);
+              showDeactivateConfirm(selectedUser);
             }}
             block
           >
-            Eliminar
+            Desactivar
           </Button>
         </div>
       </div>
@@ -635,7 +674,7 @@ const Usuarios: React.FC = () => {
               options={[
                 { label: 'Administrador', value: 1 },
                 { label: 'Médico', value: 2 },
-                { label: 'Consultor', value: 3 },
+                { label: 'Auditor', value: 3 },
               ]}
               optionType="button"
               buttonStyle="solid"
@@ -694,6 +733,18 @@ const Usuarios: React.FC = () => {
                 <Input placeholder="Ej: Cardiología" size="large" />
               </Form.Item>
             </>
+          )}
+
+          {editingUser && (
+            <Form.Item name="activo" label="Estado" rules={[{ required: true, message: 'Seleccione el estado' }]}>
+              <Select
+                size="large"
+                options={[
+                  { label: 'Activo', value: true },
+                  { label: 'Inactivo', value: false },
+                ]}
+              />
+            </Form.Item>
           )}
 
           {!editingUser && (
