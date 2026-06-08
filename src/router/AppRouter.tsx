@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Spin, App as AntdApp } from 'antd';
 
 import { AuthProvider } from '../context/auth/AuthContext';
@@ -9,6 +9,7 @@ import PublicLayout from '../layouts/PublicLayout/PublicLayout';
 import PrivateLayout from '../layouts/PrivateLayout/PrivateLayout';
 
 import Login from '../pages/Auth/Login';
+import Perfil from '../pages/Perfil/Perfil';
 
 import Dashboard from '../pages/Dashboard/Dashboard';
 import DashboardMedico from '../pages/DashboardMedico/DashboardMedico';
@@ -17,29 +18,62 @@ import DashboardConsultor from '../pages/DashboardConsultor/DashboardConsultor';
 import Clinicas from '../pages/clinicas/Clinicas';
 import Usuarios from '../pages/Usuarios/Usuarios';
 
+import {
+  ROUTES,
+  getDashboardByRole,
+  canAccessRoute,
+} from '../router/routes';
+
+const LoadingScreen: React.FC = () => {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+      }}
+    >
+      <Spin size="large" />
+    </div>
+  );
+};
+
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
-  return isAuthenticated ? (
-    <>{children}</>
-  ) : (
-    <Navigate to="/login" replace />
-  );
+  return isAuthenticated ? <>{children}</> : <Navigate to={ROUTES.LOGIN} replace />;
+};
+
+const RoleRedirect: React.FC = () => {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  return <Navigate to={getDashboardByRole(user?.rol_id)} replace />;
+};
+
+const RoleRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  const allowed = canAccessRoute(user?.rol_id, location.pathname);
+
+  if (!allowed) {
+    return <Navigate to={getDashboardByRole(user?.rol_id)} replace />;
+  }
+
+  return <>{children}</>;
 };
 
 const AppRouter: React.FC = () => {
@@ -49,8 +83,8 @@ const AppRouter: React.FC = () => {
         <AntdApp>
           <Routes>
             <Route element={<PublicLayout />}>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path={ROUTES.LOGIN} element={<Login />} />
+              <Route path="/" element={<Navigate to={ROUTES.LOGIN} replace />} />
             </Route>
 
             <Route
@@ -60,21 +94,75 @@ const AppRouter: React.FC = () => {
                 </ProtectedRoute>
               }
             >
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/inicio" element={<RoleRedirect />} />
 
-              <Route path="/dashboard-medico" element={<DashboardMedico />} />
+              <Route
+                path={ROUTES.DASHBOARD_ADMIN}
+                element={
+                  <RoleRoute>
+                    <Dashboard />
+                  </RoleRoute>
+                }
+              />
 
-              <Route path="/dashboard-consultor" element={<DashboardConsultor />} />
+              <Route
+                path={ROUTES.DASHBOARD_MEDICO}
+                element={
+                  <RoleRoute>
+                    <DashboardMedico />
+                  </RoleRoute>
+                }
+              />
 
-              <Route path="/usuarios" element={<Usuarios />} />
+              <Route
+                path={ROUTES.DASHBOARD_CONSULTOR}
+                element={
+                  <RoleRoute>
+                    <DashboardConsultor />
+                  </RoleRoute>
+                }
+              />
 
-              <Route path="/clinicas" element={<Clinicas />} />
+              <Route
+                path={ROUTES.USERS}
+                element={
+                  <RoleRoute>
+                    <Usuarios />
+                  </RoleRoute>
+                }
+              />
 
-              <Route path="/clinicas/nueva" element={<Clinicas />} />
+              <Route
+                path={ROUTES.CLINICS}
+                element={
+                  <RoleRoute>
+                    <Clinicas />
+                  </RoleRoute>
+                }
+              />
 
-              <Route path="/clinicas/:id" element={<Clinicas />} />
+              <Route
+                path={ROUTES.CLINIC_NEW}
+                element={
+                  <RoleRoute>
+                    <Clinicas />
+                  </RoleRoute>
+                }
+              />
 
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route
+                path={ROUTES.CLINIC_DETAIL}
+                element={
+                  <RoleRoute>
+                    <Clinicas />
+                  </RoleRoute>
+                }
+              />
+
+              <Route path="/perfil" element={<Perfil />} />
+
+              <Route path="*" element={<RoleRedirect />} />
+
             </Route>
           </Routes>
         </AntdApp>

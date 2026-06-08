@@ -353,14 +353,14 @@ const handleDelete = async (consultorio: Consultorio) => {
         <Space size="small">
         
             <Tooltip title="Desactivar">
-  <Button
-    className="action-btn delete-btn"
-    type="text"
-    icon={<DeleteOutlined />}
-    disabled={!record.activo}
-    onClick={() => handleDelete(record)}
-  />
-</Tooltip>
+              <Button
+                className="action-btn delete-btn"
+                type="text"
+                icon={<DeleteOutlined />}
+                disabled={!record.activo}
+                onClick={() => handleDelete(record)}
+              />
+            </Tooltip>
        
         </Space>
       ),

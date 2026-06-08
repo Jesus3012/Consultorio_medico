@@ -14,6 +14,7 @@ import {
   EyeOutlined,
   ShopOutlined,
 } from '@ant-design/icons';
+import WelcomeService, { type WelcomeStats } from '../../services/welcome/welcome.service';
 import './WelcomeModal.css';
 
 const { Title, Text, Paragraph } = Typography;
@@ -50,23 +51,75 @@ const detectGender = (nombre: string): GenderType => {
     .split(' ')[0];
 
   const maleNames = [
-    'jose', 'juan', 'carlos', 'miguel', 'angel',
-    'jesus', 'pedro', 'pablo', 'francisco', 'javier',
-    'manuel', 'andres', 'alejandro', 'roberto', 'antonio',
-    'fernando', 'sergio', 'ramon', 'ricardo', 'alberto',
-    'gerardo', 'omar', 'edgar', 'ivan', 'david', 'jorge',
-    'luis', 'daniel', 'arturo', 'mario', 'hugo', 'ruben',
-    'gabriel', 'oscar',
+    'jose',
+    'juan',
+    'carlos',
+    'miguel',
+    'angel',
+    'jesus',
+    'pedro',
+    'pablo',
+    'francisco',
+    'javier',
+    'manuel',
+    'andres',
+    'alejandro',
+    'roberto',
+    'antonio',
+    'fernando',
+    'sergio',
+    'ramon',
+    'ricardo',
+    'alberto',
+    'gerardo',
+    'omar',
+    'edgar',
+    'ivan',
+    'david',
+    'jorge',
+    'luis',
+    'daniel',
+    'arturo',
+    'mario',
+    'hugo',
+    'ruben',
+    'gabriel',
+    'oscar',
   ];
 
   const femaleNames = [
-    'maria', 'ana', 'laura', 'carmen', 'josefina',
-    'isabel', 'luisa', 'patricia', 'martha', 'teresa',
-    'gloria', 'silvia', 'veronica', 'elena', 'sofia',
-    'valentina', 'camila', 'daniela', 'paula', 'andrea',
-    'fernanda', 'alejandra', 'monica', 'lorena', 'janeth',
-    'karla', 'karen', 'liliana', 'jessica', 'vanessa',
-    'gabriela', 'adriana',
+    'maria',
+    'ana',
+    'laura',
+    'carmen',
+    'josefina',
+    'isabel',
+    'luisa',
+    'patricia',
+    'martha',
+    'teresa',
+    'gloria',
+    'silvia',
+    'veronica',
+    'elena',
+    'sofia',
+    'valentina',
+    'camila',
+    'daniela',
+    'paula',
+    'andrea',
+    'fernanda',
+    'alejandra',
+    'monica',
+    'lorena',
+    'janeth',
+    'karla',
+    'karen',
+    'liliana',
+    'jessica',
+    'vanessa',
+    'gabriela',
+    'adriana',
   ];
 
   if (maleNames.includes(primerNombre)) return 'MALE';
@@ -82,6 +135,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
   const [progress, setProgress] = useState(0);
   const [loading, setLoading] = useState(true);
   const [userGender, setUserGender] = useState<GenderType>('UNKNOWN');
+  const [welcomeStats, setWelcomeStats] = useState<WelcomeStats | null>(null);
 
   const usuario = useMemo(() => {
     if (!user) return null;
@@ -129,10 +183,10 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
   const getRolId = () => {
     return Number(
       usuario?.rol_id ??
-      usuario?.rolId ??
-      usuario?.perfil_id ??
-      usuario?.perfilId ??
-      0
+        usuario?.rolId ??
+        usuario?.perfil_id ??
+        usuario?.perfilId ??
+        0
     );
   };
 
@@ -228,73 +282,123 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
 
     if (rolId === 1) {
       return [
-        { icon: <TeamOutlined />, label: 'Usuarios activos', value: '12' },
-        { icon: <CalendarOutlined />, label: 'Citas registradas', value: '48' },
-        { icon: <ShopOutlined />, label: 'Consultorios', value: '3' },
+        {
+          icon: <TeamOutlined />,
+          label: 'Usuarios activos',
+          value: String(welcomeStats?.usuariosActivos ?? 0),
+        },
+        {
+          icon: <MedicineBoxOutlined />,
+          label: 'Médicos activos',
+          value: String(welcomeStats?.medicosActivos ?? 0),
+        },
+        {
+          icon: <ShopOutlined />,
+          label: 'Sucursales activas',
+          value: String(welcomeStats?.sucursalesActivas ?? 0),
+        },
       ];
     }
 
     if (rolId === 2) {
       return [
-        { icon: <TeamOutlined />, label: 'Pacientes hoy', value: '8' },
-        { icon: <CalendarOutlined />, label: 'Próximas citas', value: '5' },
-        { icon: <CheckCircleOutlined />, label: 'Pendientes', value: '3' },
+        {
+          icon: <TeamOutlined />,
+          label: 'Pacientes hoy',
+          value: String(welcomeStats?.pacientesHoy ?? 0),
+        },
+        {
+          icon: <CalendarOutlined />,
+          label: 'Próximas citas',
+          value: String(welcomeStats?.proximasCitas ?? 0),
+        },
+        {
+          icon: <CheckCircleOutlined />,
+          label: 'Pendientes',
+          value: String(welcomeStats?.pendientes ?? 0),
+        },
       ];
     }
 
     if (rolId === 3) {
       return [
-        { icon: <TeamOutlined />, label: 'Pacientes activos', value: '312' },
-        { icon: <CalendarOutlined />, label: 'Citas registradas', value: '124' },
-        { icon: <CheckCircleOutlined />, label: 'Consultas revisadas', value: '86' },
+        {
+          icon: <TeamOutlined />,
+          label: 'Usuarios activos',
+          value: String(welcomeStats?.usuariosActivos ?? 0),
+        },
+        {
+          icon: <MedicineBoxOutlined />,
+          label: 'Médicos activos',
+          value: String(welcomeStats?.medicosActivos ?? 0),
+        },
+        {
+          icon: <ShopOutlined />,
+          label: 'Sucursales activas',
+          value: String(welcomeStats?.sucursalesActivas ?? 0),
+        },
       ];
     }
 
     return [
-      { icon: <TeamOutlined />, label: 'Pacientes', value: '0' },
+      { icon: <TeamOutlined />, label: 'Usuarios', value: '0' },
       { icon: <CalendarOutlined />, label: 'Citas', value: '0' },
       { icon: <CheckCircleOutlined />, label: 'Pendientes', value: '0' },
     ];
-  }, [usuario]);
+  }, [usuario, welcomeStats]);
 
   useEffect(() => {
     if (!visible) return;
 
-    if (usuario) {
-      const nombre = getNombre();
-      const genderFromUser = normalizeGender(usuario?.genero);
+    let interval: ReturnType<typeof setInterval>;
 
-      const gender =
-        genderFromUser !== 'UNKNOWN'
-          ? genderFromUser
-          : detectGender(nombre);
+    const loadWelcome = async () => {
+      if (usuario) {
+        const nombre = getNombre();
+        const genderFromUser = normalizeGender(usuario?.genero);
 
-      setUserGender(gender);
+        const gender =
+          genderFromUser !== 'UNKNOWN' ? genderFromUser : detectGender(nombre);
 
-      console.log('WELCOME USER:', usuario);
-      console.log('WELCOME ROL ID:', getRolId());
-      console.log('WELCOME NOMBRE COMPLETO:', getNombreCompleto());
-      console.log('WELCOME GÉNERO:', gender);
-    } else {
-      setUserGender('UNKNOWN');
-    }
+        setUserGender(gender);
 
-    setProgress(0);
-    setLoading(true);
+        console.log('WELCOME USER:', usuario);
+        console.log('WELCOME ROL ID:', getRolId());
+        console.log('WELCOME NOMBRE COMPLETO:', getNombreCompleto());
+        console.log('WELCOME GÉNERO:', gender);
+      } else {
+        setUserGender('UNKNOWN');
+      }
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setLoading(false);
-          return 100;
-        }
+      setProgress(0);
+      setLoading(true);
 
-        return prev + 20;
-      });
-    }, 200);
+      try {
+        const data = await WelcomeService.getWelcomeStats();
+        setWelcomeStats(data);
+      } catch (error) {
+        console.error('Error cargando métricas del welcome:', error);
+        setWelcomeStats(null);
+      }
 
-    return () => clearInterval(interval);
+      interval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(interval);
+            setLoading(false);
+            return 100;
+          }
+
+          return prev + 20;
+        });
+      }, 200);
+    };
+
+    loadWelcome();
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [visible, usuario]);
 
   return (

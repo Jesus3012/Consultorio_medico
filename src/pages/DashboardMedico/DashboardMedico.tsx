@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Card,
   Row,
@@ -21,9 +21,6 @@ import {
   PlusOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useAuth } from '../../hooks/useAuth';
-import WelcomeModal from '../../components/Auth/WelcomeModal';
-import axiosInstance from '../../api/axios.config';
 import './DashboardMedico.css';
 
 const { Title, Text } = Typography;
@@ -82,98 +79,6 @@ const pacientesRecientes = [
 ];
 
 const DashboardMedico: React.FC = () => {
-  const { user } = useAuth();
-
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [usuarioCompleto, setUsuarioCompleto] = useState<any | null>(null);
-
-  useEffect(() => {
-    const cargarUsuarioCompleto = async () => {
-      if (!user?.id) return;
-
-      try {
-        const response = await axiosInstance.get(`/usuarios/${user.id}`);
-        const usuarioApi = response.data?.data || response.data;
-
-        setUsuarioCompleto(usuarioApi);
-        setShowWelcome(true);
-
-        console.log('USUARIO COMPLETO DASHBOARD MÉDICO:', usuarioApi);
-      } catch (error) {
-        console.error('Error cargando usuario completo:', error);
-
-        setUsuarioCompleto(user);
-        setShowWelcome(true);
-      }
-    };
-
-    cargarUsuarioCompleto();
-  }, [user?.id]);
-
-  const userData = usuarioCompleto
-    ? {
-        id: usuarioCompleto.id,
-
-        nombre: usuarioCompleto.nombre || '',
-
-        primerApellido:
-          usuarioCompleto.primerApellido ||
-          usuarioCompleto.primer_apellido ||
-          '',
-
-        segundoApellido:
-          usuarioCompleto.segundoApellido ||
-          usuarioCompleto.segundo_apellido ||
-          '',
-
-        primer_apellido:
-          usuarioCompleto.primerApellido ||
-          usuarioCompleto.primer_apellido ||
-          '',
-
-        segundo_apellido:
-          usuarioCompleto.segundoApellido ||
-          usuarioCompleto.segundo_apellido ||
-          '',
-
-        correo:
-          usuarioCompleto.correo ||
-          usuarioCompleto.email ||
-          '',
-
-        email:
-          usuarioCompleto.correo ||
-          usuarioCompleto.email ||
-          '',
-
-        rolId:
-          usuarioCompleto.rolId ??
-          usuarioCompleto.rol_id,
-
-        rol_id:
-          usuarioCompleto.rolId ??
-          usuarioCompleto.rol_id,
-
-        empresaId:
-          usuarioCompleto.empresaId ??
-          usuarioCompleto.empresa_id,
-
-        empresa_id:
-          usuarioCompleto.empresaId ??
-          usuarioCompleto.empresa_id,
-
-        sucursalId:
-          usuarioCompleto.sucursalId ??
-          usuarioCompleto.sucursal_id,
-
-        sucursal_id:
-          usuarioCompleto.sucursalId ??
-          usuarioCompleto.sucursal_id,
-
-        genero: usuarioCompleto.genero,
-      }
-    : null;
-
   const getEstadoColor = (estado: AgendaItem['estado']) => {
     switch (estado) {
       case 'En espera':
@@ -230,150 +135,142 @@ const DashboardMedico: React.FC = () => {
   ];
 
   return (
-    <>
-      <WelcomeModal
-        visible={showWelcome}
-        user={userData}
-        onClose={() => setShowWelcome(false)}
-      />
-
-      <div className="doctor-dashboard">
-        <div className="doctor-header">
-          <div>
-            <Text type="secondary">
-              Resumen de agenda, pacientes y actividades clínicas del día
-            </Text>
-          </div>
-
-          <Space wrap className="doctor-header-actions">
-            <Button type="primary" icon={<PlusOutlined />} className="primary-medical-btn">
-              Consulta
-            </Button>
-
-            <Button icon={<MedicineBoxOutlined />} className="secondary-medical-btn">
-              Procedimiento
-            </Button>
-          </Space>
+    <div className="doctor-dashboard">
+      <div className="doctor-header">
+        <div>
+          <Text type="secondary">
+            Resumen de agenda, pacientes y actividades clínicas del día
+          </Text>
         </div>
 
-        <Row gutter={[16, 16]}>
-          <Col xs={12} md={8} lg={6}>
-            <Card className="doctor-stat-card">
-              <CalendarOutlined className="doctor-stat-icon" />
-              <Text>Citas hoy</Text>
-              <Title level={2}>12</Title>
-            </Card>
-          </Col>
+        <Space wrap className="doctor-header-actions">
+          <Button type="primary" icon={<PlusOutlined />} className="primary-medical-btn">
+            Consulta
+          </Button>
 
-          <Col xs={12} md={8} lg={6}>
-            <Card className="doctor-stat-card">
-              <MedicineBoxOutlined className="doctor-stat-icon" />
-              <Text>Consultas hoy</Text>
-              <Title level={2}>8</Title>
-            </Card>
-          </Col>
-
-          <Col xs={12} md={8} lg={6}>
-            <Card className="doctor-stat-card">
-              <UserOutlined className="doctor-stat-icon" />
-              <Text>Pacientes</Text>
-              <Title level={2}>156</Title>
-            </Card>
-          </Col>
-
-          <Col xs={12} md={24} lg={6}>
-            <Card className="doctor-stat-card">
-              <FileTextOutlined className="doctor-stat-icon" />
-              <Text>Recetas emitidas</Text>
-              <Title level={2}>6</Title>
-            </Card>
-          </Col>
-        </Row>
-
-        <Row gutter={[16, 16]} className="doctor-main-row equal-row">
-          <Col xs={24} lg={16}>
-            <Card
-              title="Agenda del día"
-              className="doctor-card equal-card"
-              extra={<Button type="link">Ver agenda completa</Button>}
-            >
-              <Table
-                columns={columns}
-                dataSource={agendaHoy}
-                rowKey="id"
-                pagination={false}
-                size="middle"
-              />
-            </Card>
-          </Col>
-
-          <Col xs={24} lg={8}>
-            <Card title="Pacientes recientes" className="doctor-card equal-card">
-              <div className="recent-patients">
-                {pacientesRecientes.map((paciente) => (
-                  <div key={paciente.nombre} className="recent-patient-item">
-                    <Space>
-                      <Avatar icon={<UserOutlined />} className="patient-avatar" />
-
-                      <div>
-                        <strong>{paciente.nombre}</strong>
-                        <p>Última consulta: {paciente.fecha}</p>
-                      </div>
-                    </Space>
-
-                    <CheckCircleOutlined className="recent-check" />
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </Col>
-        </Row>
-
-        <Row gutter={[16, 16]} className="doctor-main-row equal-row">
-          <Col xs={24} lg={12}>
-            <Card title="Consultas por semana" className="doctor-card equal-card">
-              <div className="week-chart">
-                {consultasSemana.map((item) => (
-                  <div key={item.dia} className="week-item">
-                    <span>{item.dia}</span>
-
-                    <Progress
-                      percent={item.total * 4}
-                      showInfo={false}
-                      strokeColor="#1677ff"
-                    />
-
-                    <strong>{item.total}</strong>
-                  </div>
-                ))}
-              </div>
-            </Card>
-          </Col>
-
-          <Col xs={24} lg={12}>
-            <Card title="Acciones rápidas" className="doctor-card doctor-actions-card equal-card">
-              <div className="quick-actions-grid">
-                <Button block icon={<PlusOutlined />} className="quick-main-action">
-                  Consulta
-                </Button>
-
-                <Button block icon={<MedicineBoxOutlined />} className="quick-main-action">
-                  Procedimiento
-                </Button>
-
-                <Button block icon={<FileTextOutlined />}>
-                  Nueva receta
-                </Button>
-
-                <Button block icon={<CalendarOutlined />}>
-                  Ver agenda
-                </Button>
-              </div>
-            </Card>
-          </Col>
-        </Row>
+          <Button icon={<MedicineBoxOutlined />} className="secondary-medical-btn">
+            Procedimiento
+          </Button>
+        </Space>
       </div>
-    </>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={12} md={8} lg={6}>
+          <Card className="doctor-stat-card">
+            <CalendarOutlined className="doctor-stat-icon" />
+            <Text>Citas hoy</Text>
+            <Title level={2}>12</Title>
+          </Card>
+        </Col>
+
+        <Col xs={12} md={8} lg={6}>
+          <Card className="doctor-stat-card">
+            <MedicineBoxOutlined className="doctor-stat-icon" />
+            <Text>Consultas hoy</Text>
+            <Title level={2}>8</Title>
+          </Card>
+        </Col>
+
+        <Col xs={12} md={8} lg={6}>
+          <Card className="doctor-stat-card">
+            <UserOutlined className="doctor-stat-icon" />
+            <Text>Pacientes</Text>
+            <Title level={2}>156</Title>
+          </Card>
+        </Col>
+
+        <Col xs={12} md={24} lg={6}>
+          <Card className="doctor-stat-card">
+            <FileTextOutlined className="doctor-stat-icon" />
+            <Text>Recetas emitidas</Text>
+            <Title level={2}>6</Title>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} className="doctor-main-row equal-row">
+        <Col xs={24} lg={16}>
+          <Card
+            title="Agenda del día"
+            className="doctor-card equal-card"
+            extra={<Button type="link">Ver agenda completa</Button>}
+          >
+            <Table
+              columns={columns}
+              dataSource={agendaHoy}
+              rowKey="id"
+              pagination={false}
+              size="middle"
+            />
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={8}>
+          <Card title="Pacientes recientes" className="doctor-card equal-card">
+            <div className="recent-patients">
+              {pacientesRecientes.map((paciente) => (
+                <div key={paciente.nombre} className="recent-patient-item">
+                  <Space>
+                    <Avatar icon={<UserOutlined />} className="patient-avatar" />
+
+                    <div>
+                      <strong>{paciente.nombre}</strong>
+                      <p>Última consulta: {paciente.fecha}</p>
+                    </div>
+                  </Space>
+
+                  <CheckCircleOutlined className="recent-check" />
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} className="doctor-main-row equal-row">
+        <Col xs={24} lg={12}>
+          <Card title="Consultas por semana" className="doctor-card equal-card">
+            <div className="week-chart">
+              {consultasSemana.map((item) => (
+                <div key={item.dia} className="week-item">
+                  <span>{item.dia}</span>
+
+                  <Progress
+                    percent={item.total * 4}
+                    showInfo={false}
+                    strokeColor="#1677ff"
+                  />
+
+                  <strong>{item.total}</strong>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={12}>
+          <Card title="Acciones rápidas" className="doctor-card doctor-actions-card equal-card">
+            <div className="quick-actions-grid">
+              <Button block icon={<PlusOutlined />} className="quick-main-action">
+                Consulta
+              </Button>
+
+              <Button block icon={<MedicineBoxOutlined />} className="quick-main-action">
+                Procedimiento
+              </Button>
+
+              <Button block icon={<FileTextOutlined />}>
+                Nueva receta
+              </Button>
+
+              <Button block icon={<CalendarOutlined />}>
+                Ver agenda
+              </Button>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+    </div>
   );
 };
 
