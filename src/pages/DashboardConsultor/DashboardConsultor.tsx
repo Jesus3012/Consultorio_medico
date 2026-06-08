@@ -9,6 +9,9 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   EyeOutlined,
+  AlertOutlined,
+  ShopOutlined,
+  RiseOutlined,
 } from '@ant-design/icons';
 
 import './DashboardConsultor.css';
@@ -16,13 +19,12 @@ import './DashboardConsultor.css';
 const DashboardConsultor: React.FC = () => {
   return (
     <div className="consultor-dashboard">
-
       <div className="consultor-header">
         <div>
-          <p className="consultor-subtitle">
-            Panel de consulta general
-          </p>
+          <p className="consultor-subtitle">Panel de consulta general</p>
+
           <h1>Dashboard Consultor</h1>
+
           <span>
             Consulta estadísticas, pacientes, citas y actividad clínica sin permisos de edición.
           </span>
@@ -31,6 +33,22 @@ const DashboardConsultor: React.FC = () => {
         <div className="readonly-badge">
           <EyeOutlined />
           Solo lectura
+        </div>
+      </div>
+
+      <div className="consultor-highlight">
+        <div>
+          <p>Resumen operativo</p>
+          <h2>Monitoreo general del consultorio</h2>
+          <span>
+            Visualiza el comportamiento de citas, pacientes, recetas y productividad clínica.
+          </span>
+        </div>
+
+        <div className="highlight-indicator">
+          <RiseOutlined />
+          <strong>78%</strong>
+          <small>Actividad completada</small>
         </div>
       </div>
 
@@ -73,7 +91,6 @@ const DashboardConsultor: React.FC = () => {
       </div>
 
       <div className="consultor-content-grid">
-
         <section className="consultor-card large-card">
           <div className="card-title-row">
             <h3>Resumen de agenda</h3>
@@ -89,28 +106,36 @@ const DashboardConsultor: React.FC = () => {
             </div>
 
             <div className="agenda-row">
-              <span><ClockCircleOutlined /> 09:00</span>
+              <span>
+                <ClockCircleOutlined /> 09:00
+              </span>
               <strong>Juan Pérez López</strong>
               <span>Dra. María Santos</span>
               <em className="status waiting">En espera</em>
             </div>
 
             <div className="agenda-row">
-              <span><ClockCircleOutlined /> 09:30</span>
+              <span>
+                <ClockCircleOutlined /> 09:30
+              </span>
               <strong>Ana Sofía Ramírez</strong>
               <span>Dr. Carlos Méndez</span>
               <em className="status progress">En consulta</em>
             </div>
 
             <div className="agenda-row">
-              <span><ClockCircleOutlined /> 10:00</span>
+              <span>
+                <ClockCircleOutlined /> 10:00
+              </span>
               <strong>Luis Hernández</strong>
               <span>Dra. Fernanda Ruiz</span>
               <em className="status scheduled">Programada</em>
             </div>
 
             <div className="agenda-row">
-              <span><ClockCircleOutlined /> 10:30</span>
+              <span>
+                <ClockCircleOutlined /> 10:30
+              </span>
               <strong>María López</strong>
               <span>Dr. Roberto Díaz</span>
               <em className="status done">Finalizada</em>
@@ -189,18 +214,58 @@ const DashboardConsultor: React.FC = () => {
 
         <section className="consultor-card">
           <div className="card-title-row">
+            <h3>Alertas informativas</h3>
+            <span>Monitoreo</span>
+          </div>
+
+          <div className="consultor-alerts">
+            <div className="alert-item warning">
+              <AlertOutlined />
+              <div>
+                <strong>5 citas pendientes por confirmar</strong>
+                <p>Revisión sugerida por administración.</p>
+              </div>
+            </div>
+
+            <div className="alert-item info">
+              <EyeOutlined />
+              <div>
+                <strong>12 expedientes actualizados</strong>
+                <p>Actividad registrada durante el día.</p>
+              </div>
+            </div>
+
+            <div className="alert-item success">
+              <CheckCircleOutlined />
+              <div>
+                <strong>78% de consultas completadas</strong>
+                <p>Indicador general de atención clínica.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="consultor-card">
+          <div className="card-title-row">
             <h3>Actividad reciente</h3>
             <span>Lectura</span>
           </div>
 
           <div className="activity-list">
-            <p><CheckCircleOutlined /> Consulta finalizada para María López.</p>
-            <p><CheckCircleOutlined /> Receta emitida por Dr. Carlos Méndez.</p>
-            <p><CheckCircleOutlined /> Nuevo paciente registrado en sistema.</p>
-            <p><CheckCircleOutlined /> Cita programada para mañana.</p>
+            <p>
+              <CheckCircleOutlined /> Consulta finalizada para María López.
+            </p>
+            <p>
+              <CheckCircleOutlined /> Receta emitida por Dr. Carlos Méndez.
+            </p>
+            <p>
+              <CheckCircleOutlined /> Nuevo paciente registrado en sistema.
+            </p>
+            <p>
+              <CheckCircleOutlined /> Cita programada para mañana.
+            </p>
           </div>
         </section>
-
       </div>
     </div>
   );

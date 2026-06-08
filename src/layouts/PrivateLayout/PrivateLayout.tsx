@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layout,
   Menu,
@@ -33,6 +33,8 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import MobileMenu from '../../components/MobileMenu/MobileMenu';
+import WelcomeModal from '../../components/Auth/WelcomeModal';
+import UserService from '../../services/user/user.service';
 import './PrivateLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -41,11 +43,47 @@ const { Text } = Typography;
 const PrivateLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { message, modal } = App.useApp();
+
+  useEffect(() => {
+    const loadUserFromApi = async () => {
+      try {
+        const me = await UserService.getMe();
+
+        console.log('USUARIO DESDE API /usuarios/me:', me);
+
+        setCurrentUser(me);
+        localStorage.setItem('user', JSON.stringify(me));
+
+        const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
+
+        if (!hasSeenWelcome) {
+          setWelcomeOpen(true);
+          sessionStorage.setItem('hasSeenWelcome', 'true');
+        }
+      } catch (error) {
+        console.error('Error al consultar /usuarios/me:', error);
+
+        const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
+
+        if (!hasSeenWelcome) {
+          setWelcomeOpen(true);
+          sessionStorage.setItem('hasSeenWelcome', 'true');
+        }
+      }
+    };
+
+    loadUserFromApi();
+  }, []);
+
+  const activeUser = currentUser || user;
+  const rolId = Number(activeUser?.rol_id || activeUser?.rolId || 0);
 
   const menuAdmin = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
@@ -76,7 +114,7 @@ const PrivateLayout: React.FC = () => {
   ];
 
   const getMenuItems = () => {
-    switch (user?.rol_id) {
+    switch (rolId) {
       case 1:
         return menuAdmin;
       case 2:
@@ -119,7 +157,7 @@ const PrivateLayout: React.FC = () => {
   };
 
   const getRolName = () => {
-    switch (user?.rol_id) {
+    switch (rolId) {
       case 1:
         return 'Administrador';
       case 2:
@@ -137,7 +175,7 @@ const PrivateLayout: React.FC = () => {
       icon: <ProfileOutlined />,
       label: 'Mi perfil',
     },
-    ...(user?.rol_id !== 3
+    ...(rolId !== 3
       ? [
           {
             key: 'settings',
@@ -250,7 +288,7 @@ const PrivateLayout: React.FC = () => {
 
                 <div className="user-text-info">
                   <div className="user-name">
-                    {user?.nombre} {user?.primer_apellido || ''}
+                    {activeUser?.nombre || 'Usuario'} {activeUser?.primer_apellido || ''}
                   </div>
 
                   <div className="user-role">
@@ -273,6 +311,12 @@ const PrivateLayout: React.FC = () => {
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         onMenuClick={handleMenuClick}
+      />
+
+      <WelcomeModal
+        visible={welcomeOpen}
+        user={activeUser}
+        onClose={() => setWelcomeOpen(false)}
       />
     </Layout>
   );

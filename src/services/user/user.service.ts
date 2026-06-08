@@ -1,4 +1,3 @@
-// src/services/user/user.service.ts
 import axiosInstance from '../../api/axios.config';
 
 export interface UserData {
@@ -28,24 +27,135 @@ class UserService {
     if (!UserService.instance) {
       UserService.instance = new UserService();
     }
+
     return UserService.instance;
+  }
+
+  private getResponseData(responseData: any): any {
+    return (
+      responseData?.data ||
+      responseData?.user ||
+      responseData?.usuario ||
+      responseData
+    );
   }
 
   private normalizeUser(user: any): UserData {
     return {
-      id: user.id,
-      nombre: user.nombre || '',
-      primer_apellido: user.primerApellido || user.primer_apellido || '',
-      segundo_apellido: user.segundoApellido || user.segundo_apellido || '',
-      email: user.correo || user.email || '',
-      telefono: user.telefono || '',
-      rol_id: user.rolId || user.rol_id || 2,
-      empresa_id: user.empresaId || user.empresa_id,
-      sucursal_id: user.sucursalId ?? user.sucursal_id ?? null,
-      activo: user.activo === true || user.activo === 1,
-      cedula_profesional: user.cedulaProfesional || user.cedula_profesional || '',
-      especialidad: user.especialidad || '',
+      id: user?.id,
+      nombre: user?.nombre || '',
+      primer_apellido: user?.primerApellido || user?.primer_apellido || '',
+      segundo_apellido: user?.segundoApellido || user?.segundo_apellido || '',
+      email: user?.correo || user?.email || '',
+      telefono: user?.telefono || '',
+      rol_id: Number(user?.rolId || user?.rol_id || 2),
+      empresa_id: user?.empresaId || user?.empresa_id,
+      sucursal_id: user?.sucursalId ?? user?.sucursal_id ?? null,
+      activo: user?.activo === true || user?.activo === 1,
+      cedula_profesional: user?.cedulaProfesional || user?.cedula_profesional || '',
+      especialidad: user?.especialidad || '',
     };
+  }
+
+  private buildUserPayload(userData: Partial<UserData>): any {
+    const payload: any = {};
+
+    if (userData.nombre !== undefined) {
+      payload.nombre = userData.nombre;
+    }
+
+    if (userData.primer_apellido !== undefined) {
+      payload.primerApellido = userData.primer_apellido;
+    }
+
+    if (userData.segundo_apellido !== undefined) {
+      payload.segundoApellido = userData.segundo_apellido;
+    }
+
+    if (userData.email !== undefined) {
+      payload.correo = userData.email;
+    }
+
+    if (userData.telefono !== undefined) {
+      payload.telefono = userData.telefono;
+    }
+
+    if (userData.rol_id !== undefined) {
+      payload.rolId = userData.rol_id;
+    }
+
+    if (userData.empresa_id !== undefined) {
+      payload.empresaId = userData.empresa_id;
+    }
+
+    if (userData.sucursal_id !== undefined) {
+      payload.sucursalId =
+        userData.sucursal_id === null ? null : Number(userData.sucursal_id);
+    }
+
+    if (userData.cedula_profesional !== undefined) {
+      payload.cedulaProfesional = userData.cedula_profesional;
+    }
+
+    if (userData.especialidad !== undefined) {
+      payload.especialidad = userData.especialidad;
+    }
+
+    if (userData.activo !== undefined) {
+      payload.activo = userData.activo;
+    }
+
+    if (userData.password !== undefined) {
+      payload.password = userData.password;
+    }
+
+    return payload;
+  }
+
+  async getMe(): Promise<UserData> {
+    try {
+      const response = await axiosInstance.get('/usuarios/me');
+
+      console.log('RESPUESTA REAL /usuarios/me:', response.data);
+
+      const user = response.data?.data;
+
+      console.log('USUARIO EXTRAÍDO /usuarios/me:', user);
+
+      return this.normalizeUser(user);
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      throw error;
+    }
+  }
+
+  async updateMe(userData: Partial<UserData>): Promise<UserData> {
+    try {
+      const payload = this.buildUserPayload(userData);
+
+      delete payload.rolId;
+      delete payload.empresaId;
+      delete payload.sucursalId;
+      delete payload.activo;
+      delete payload.password;
+
+      if (Object.keys(payload).length === 0) {
+        throw new Error('No hay campos para actualizar');
+      }
+
+      const response = await axiosInstance.patch('/usuarios/me', payload);
+      const updatedUser = this.getResponseData(response.data);
+
+      return this.normalizeUser(updatedUser);
+    } catch (error: any) {
+      console.error('Error updating current user:', error);
+
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+
+      throw error;
+    }
   }
 
   async getUsuarios(page: number = 1, limit: number = 100): Promise<UserData[]> {
@@ -73,7 +183,8 @@ class UserService {
   async getUsuarioById(id: number): Promise<UserData> {
     try {
       const response = await axiosInstance.get(`/usuarios/${id}`);
-      const user = response.data?.data || response.data;
+      const user = this.getResponseData(response.data);
+
       return this.normalizeUser(user);
     } catch (error) {
       console.error(`Error fetching user ${id}:`, error);
@@ -83,10 +194,21 @@ class UserService {
 
   async createUsuario(userData: UserData): Promise<UserData> {
     try {
-      if (!userData.nombre?.trim()) throw new Error('El nombre es obligatorio');
-      if (!userData.primer_apellido?.trim()) throw new Error('El primer apellido es obligatorio');
-      if (!userData.email?.trim()) throw new Error('El correo es obligatorio');
-      if (!userData.password?.trim()) throw new Error('La contraseña es obligatoria');
+      if (!userData.nombre?.trim()) {
+        throw new Error('El nombre es obligatorio');
+      }
+
+      if (!userData.primer_apellido?.trim()) {
+        throw new Error('El primer apellido es obligatorio');
+      }
+
+      if (!userData.email?.trim()) {
+        throw new Error('El correo es obligatorio');
+      }
+
+      if (!userData.password?.trim()) {
+        throw new Error('La contraseña es obligatoria');
+      }
 
       const payload: any = {
         nombre: userData.nombre.trim(),
@@ -123,7 +245,7 @@ class UserService {
       console.log('📤 Enviando a la API:', JSON.stringify(payload, null, 2));
 
       const response = await axiosInstance.post('/usuarios', payload);
-      const newUser = response.data?.data || response.data;
+      const newUser = this.getResponseData(response.data);
 
       return this.normalizeUser(newUser);
     } catch (error: any) {
@@ -140,48 +262,7 @@ class UserService {
 
   async updateUsuario(id: number, userData: Partial<UserData>): Promise<UserData> {
     try {
-      const payload: any = {};
-
-      if (userData.nombre !== undefined) {
-        payload.nombre = userData.nombre;
-      }
-
-      if (userData.primer_apellido !== undefined) {
-        payload.primerApellido = userData.primer_apellido;
-      }
-
-      if (userData.segundo_apellido !== undefined) {
-        payload.segundoApellido = userData.segundo_apellido;
-      }
-
-      if (userData.email !== undefined) {
-        payload.correo = userData.email;
-      }
-
-      if (userData.telefono !== undefined) {
-        payload.telefono = userData.telefono;
-      }
-
-      if (userData.rol_id !== undefined) {
-        payload.rolId = userData.rol_id;
-      }
-
-      if (userData.sucursal_id !== undefined) {
-        payload.sucursalId =
-          userData.sucursal_id === null ? null : Number(userData.sucursal_id);
-      }
-
-      if (userData.cedula_profesional !== undefined) {
-        payload.cedulaProfesional = userData.cedula_profesional;
-      }
-
-      if (userData.especialidad !== undefined) {
-        payload.especialidad = userData.especialidad;
-      }
-
-      if (userData.activo !== undefined) {
-        payload.activo = userData.activo;
-      }
+      const payload = this.buildUserPayload(userData);
 
       if (Object.keys(payload).length === 0) {
         throw new Error('No hay campos para actualizar');
@@ -190,7 +271,7 @@ class UserService {
       console.log('📤 Actualizando:', JSON.stringify(payload, null, 2));
 
       const response = await axiosInstance.patch(`/usuarios/${id}`, payload);
-      const updatedUser = response.data?.data || response.data;
+      const updatedUser = this.getResponseData(response.data);
 
       return this.normalizeUser(updatedUser);
     } catch (error: any) {
@@ -204,10 +285,7 @@ class UserService {
     }
   }
 
-  async changePassword(
-    id: number,
-    passwords: ChangePasswordData
-  ): Promise<void> {
+  async changePassword(id: number, passwords: ChangePasswordData): Promise<void> {
     try {
       await axiosInstance.patch(`/usuarios/${id}`, {
         password: passwords.newPassword,

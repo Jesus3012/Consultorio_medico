@@ -10,7 +10,9 @@ import {
   TeamOutlined,
   CheckCircleOutlined,
   WomanOutlined,
-  ManOutlined
+  ManOutlined,
+  EyeOutlined,
+  ShopOutlined,
 } from '@ant-design/icons';
 import './WelcomeModal.css';
 
@@ -54,7 +56,7 @@ const detectGender = (nombre: string): GenderType => {
     'fernando', 'sergio', 'ramon', 'ricardo', 'alberto',
     'gerardo', 'omar', 'edgar', 'ivan', 'david', 'jorge',
     'luis', 'daniel', 'arturo', 'mario', 'hugo', 'ruben',
-    'gabriel'
+    'gabriel', 'oscar',
   ];
 
   const femaleNames = [
@@ -64,7 +66,7 @@ const detectGender = (nombre: string): GenderType => {
     'valentina', 'camila', 'daniela', 'paula', 'andrea',
     'fernanda', 'alejandra', 'monica', 'lorena', 'janeth',
     'karla', 'karen', 'liliana', 'jessica', 'vanessa',
-    'gabriela', 'adriana'
+    'gabriela', 'adriana',
   ];
 
   if (maleNames.includes(primerNombre)) return 'MALE';
@@ -84,31 +86,25 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
   const usuario = useMemo(() => {
     if (!user) return null;
 
-    const rawUser =
+    return (
       user?.data?.data ||
       user?.data?.user ||
       user?.data?.usuario ||
       user?.data ||
       user?.user ||
       user?.usuario ||
-      user;
-
-    return rawUser;
+      user
+    );
   }, [user]);
 
   const getNombre = () => {
-    return (
-      usuario?.nombre ||
-      usuario?.name ||
-      usuario?.firstName ||
-      ''
-    );
+    return usuario?.nombre || usuario?.name || usuario?.firstName || '';
   };
 
   const getPrimerApellido = () => {
     return (
-      usuario?.primerApellido ||
       usuario?.primer_apellido ||
+      usuario?.primerApellido ||
       usuario?.apellidoPaterno ||
       usuario?.lastName ||
       ''
@@ -117,39 +113,156 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
 
   const getSegundoApellido = () => {
     return (
-      usuario?.segundoApellido ||
       usuario?.segundo_apellido ||
+      usuario?.segundoApellido ||
       usuario?.apellidoMaterno ||
       ''
     );
   };
 
   const getNombreCompleto = () => {
-    const nombre = getNombre();
-    const primerApellido = getPrimerApellido();
-    const segundoApellido = getSegundoApellido();
-
-    return `${nombre} ${primerApellido} ${segundoApellido}`
+    return `${getNombre()} ${getPrimerApellido()} ${getSegundoApellido()}`
       .replace(/\s+/g, ' ')
       .trim();
   };
 
   const getRolId = () => {
     return Number(
-      usuario?.rolId ??
       usuario?.rol_id ??
-      usuario?.perfilId ??
+      usuario?.rolId ??
       usuario?.perfil_id ??
+      usuario?.perfilId ??
       0
     );
   };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+
+    if (hour < 12) return 'Buenos días';
+    if (hour < 18) return 'Buenas tardes';
+    return 'Buenas noches';
+  };
+
+  const getRoleIcon = () => {
+    const rolId = getRolId();
+
+    switch (rolId) {
+      case 1:
+        return <StarOutlined />;
+      case 2:
+        return <MedicineBoxOutlined />;
+      case 3:
+        return <EyeOutlined />;
+      default:
+        return <UserOutlined />;
+    }
+  };
+
+  const getRoleName = () => {
+    const rolId = getRolId();
+
+    switch (rolId) {
+      case 1:
+        return 'Administrador del Sistema';
+      case 2:
+        return 'Médico Especialista';
+      case 3:
+        return 'Consultor';
+      default:
+        return 'Usuario';
+    }
+  };
+
+  const getGreetingTitle = () => {
+    const rolId = getRolId();
+
+    if (rolId === 2) {
+      if (userGender === 'FEMALE') return `${getGreeting()}, Doctora`;
+      if (userGender === 'MALE') return `${getGreeting()}, Doctor`;
+    }
+
+    return getGreeting();
+  };
+
+  const getWelcomeText = () => {
+    const fullName = getNombreCompleto();
+    const rolId = getRolId();
+
+    if (!fullName) {
+      if (rolId === 2 && userGender === 'FEMALE') return '¡Bienvenida, Doctora!';
+      if (rolId === 2 && userGender === 'MALE') return '¡Bienvenido, Doctor!';
+      if (userGender === 'FEMALE') return '¡Bienvenida!';
+      if (userGender === 'MALE') return '¡Bienvenido!';
+      return '¡Bienvenido(a)!';
+    }
+
+    if (rolId === 2 && userGender === 'FEMALE') {
+      return `¡Bienvenida, Dra. ${fullName}!`;
+    }
+
+    if (rolId === 2 && userGender === 'MALE') {
+      return `¡Bienvenido, Dr. ${fullName}!`;
+    }
+
+    if (userGender === 'FEMALE') {
+      return `¡Bienvenida, ${fullName}!`;
+    }
+
+    if (userGender === 'MALE') {
+      return `¡Bienvenido, ${fullName}!`;
+    }
+
+    return `¡Bienvenido(a), ${fullName}!`;
+  };
+
+  const getGenderBadgeIcon = () => {
+    if (userGender === 'FEMALE') return <WomanOutlined />;
+    if (userGender === 'MALE') return <ManOutlined />;
+
+    return <SmileOutlined />;
+  };
+
+  const stats = useMemo(() => {
+    const rolId = getRolId();
+
+    if (rolId === 1) {
+      return [
+        { icon: <TeamOutlined />, label: 'Usuarios activos', value: '12' },
+        { icon: <CalendarOutlined />, label: 'Citas registradas', value: '48' },
+        { icon: <ShopOutlined />, label: 'Consultorios', value: '3' },
+      ];
+    }
+
+    if (rolId === 2) {
+      return [
+        { icon: <TeamOutlined />, label: 'Pacientes hoy', value: '8' },
+        { icon: <CalendarOutlined />, label: 'Próximas citas', value: '5' },
+        { icon: <CheckCircleOutlined />, label: 'Pendientes', value: '3' },
+      ];
+    }
+
+    if (rolId === 3) {
+      return [
+        { icon: <TeamOutlined />, label: 'Pacientes activos', value: '312' },
+        { icon: <CalendarOutlined />, label: 'Citas registradas', value: '124' },
+        { icon: <CheckCircleOutlined />, label: 'Consultas revisadas', value: '86' },
+      ];
+    }
+
+    return [
+      { icon: <TeamOutlined />, label: 'Pacientes', value: '0' },
+      { icon: <CalendarOutlined />, label: 'Citas', value: '0' },
+      { icon: <CheckCircleOutlined />, label: 'Pendientes', value: '0' },
+    ];
+  }, [usuario]);
 
   useEffect(() => {
     if (!visible) return;
 
     if (usuario) {
       const nombre = getNombre();
-      const genderFromUser = normalizeGender(usuario.genero);
+      const genderFromUser = normalizeGender(usuario?.genero);
 
       const gender =
         genderFromUser !== 'UNKNOWN'
@@ -158,10 +271,9 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
 
       setUserGender(gender);
 
-      console.log('WELCOME USER RAW:', user);
-      console.log('WELCOME USER NORMALIZADO:', usuario);
-      console.log('WELCOME NOMBRE COMPLETO:', getNombreCompleto());
+      console.log('WELCOME USER:', usuario);
       console.log('WELCOME ROL ID:', getRolId());
+      console.log('WELCOME NOMBRE COMPLETO:', getNombreCompleto());
       console.log('WELCOME GÉNERO:', gender);
     } else {
       setUserGender('UNKNOWN');
@@ -184,88 +296,6 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
 
     return () => clearInterval(interval);
   }, [visible, usuario]);
-
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-
-    if (hour < 12) return 'Buenos días';
-    if (hour < 18) return 'Buenas tardes';
-    return 'Buenas noches';
-  };
-
-  const getGreetingTitle = () => {
-    const rolId = getRolId();
-
-    if (rolId === 2) {
-      if (userGender === 'FEMALE') return `${getGreeting()}, Doctora`;
-      if (userGender === 'MALE') return `${getGreeting()}, Doctor`;
-    }
-
-    return getGreeting();
-  };
-
-  const getWelcomeText = () => {
-    const fullName = getNombreCompleto();
-    const rolId = getRolId();
-
-    if (!fullName) {
-      switch (userGender) {
-        case 'FEMALE':
-          return rolId === 2 ? '¡Bienvenida, Doctora!' : '¡Bienvenida!';
-        case 'MALE':
-          return rolId === 2 ? '¡Bienvenido, Doctor!' : '¡Bienvenido!';
-        default:
-          return '¡Bienvenido(a)!';
-      }
-    }
-
-    switch (userGender) {
-      case 'FEMALE':
-        return rolId === 2
-          ? `¡Bienvenida, Dra. ${fullName}!`
-          : `¡Bienvenida, ${fullName}!`;
-
-      case 'MALE':
-        return rolId === 2
-          ? `¡Bienvenido, Dr. ${fullName}!`
-          : `¡Bienvenido, ${fullName}!`;
-
-      default:
-        return `¡Bienvenido(a), ${fullName}!`;
-    }
-  };
-
-  const getRoleIcon = () => {
-    const rolId = getRolId();
-
-    if (rolId === 1) return <StarOutlined />;
-    if (rolId === 2) return <MedicineBoxOutlined />;
-
-    return <UserOutlined />;
-  };
-
-  const getRoleName = () => {
-    const rolId = getRolId();
-
-    if (rolId === 1) return 'Administrador del Sistema';
-    if (rolId === 2) return 'Médico Especialista';
-    if (rolId === 3) return 'Auditor';
-
-    return 'Usuario';
-  };
-
-  const getGenderBadgeIcon = () => {
-    if (userGender === 'FEMALE') return <WomanOutlined />;
-    if (userGender === 'MALE') return <ManOutlined />;
-
-    return <SmileOutlined />;
-  };
-
-  const stats = [
-    { icon: <TeamOutlined />, label: 'Pacientes hoy', value: '8' },
-    { icon: <CalendarOutlined />, label: 'Próximas citas', value: '5' },
-    { icon: <CheckCircleOutlined />, label: 'Tareas pendientes', value: '3' }
-  ];
 
   return (
     <Modal
@@ -316,7 +346,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
                 className="welcome-avatar"
                 style={{
                   background: 'linear-gradient(135deg, #50EBEC 0%, #36C6C7 100%)',
-                  boxShadow: '0 8px 20px rgba(80, 235, 236, 0.3)'
+                  boxShadow: '0 8px 20px rgba(80, 235, 236, 0.3)',
                 }}
               />
 
@@ -349,13 +379,9 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
                       {stat.icon}
                     </div>
 
-                    <div className="stat-value">
-                      {stat.value}
-                    </div>
+                    <div className="stat-value">{stat.value}</div>
 
-                    <div className="stat-label">
-                      {stat.label}
-                    </div>
+                    <div className="stat-label">{stat.label}</div>
                   </div>
                 </Col>
               ))}
@@ -374,7 +400,7 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ visible, user, onClose }) =
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric'
+                day: 'numeric',
               })}
             </Text>
           </div>

@@ -71,7 +71,7 @@ const Login: React.FC = () => {
         return '/dashboard-medico';
 
       case 3:
-        return '/dashboard-medico';
+        return '/dashboard-consultor';
 
       default:
         return '/dashboard';
