@@ -116,11 +116,7 @@ class UserService {
     try {
       const response = await axiosInstance.get('/usuarios/me');
 
-      console.log('RESPUESTA REAL /usuarios/me:', response.data);
-
       const user = response.data?.data;
-
-      console.log('USUARIO EXTRAÍDO /usuarios/me:', user);
 
       return this.normalizeUser(user);
     } catch (error) {
@@ -242,8 +238,6 @@ class UserService {
         payload.especialidad = userData.especialidad.trim();
       }
 
-      console.log('📤 Enviando a la API:', JSON.stringify(payload, null, 2));
-
       const response = await axiosInstance.post('/usuarios', payload);
       const newUser = this.getResponseData(response.data);
 
@@ -267,8 +261,6 @@ class UserService {
       if (Object.keys(payload).length === 0) {
         throw new Error('No hay campos para actualizar');
       }
-
-      console.log('📤 Actualizando:', JSON.stringify(payload, null, 2));
 
       const response = await axiosInstance.patch(`/usuarios/${id}`, payload);
       const updatedUser = this.getResponseData(response.data);

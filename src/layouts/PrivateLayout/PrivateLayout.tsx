@@ -56,8 +56,6 @@ const PrivateLayout: React.FC = () => {
       try {
         const me = await UserService.getMe();
 
-        console.log('USUARIO DESDE API /usuarios/me:', me);
-
         setCurrentUser(me);
         localStorage.setItem('user', JSON.stringify(me));
 
@@ -68,8 +66,6 @@ const PrivateLayout: React.FC = () => {
           sessionStorage.setItem('hasSeenWelcome', 'true');
         }
       } catch (error) {
-        console.error('Error al consultar /usuarios/me:', error);
-
         const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
 
         if (!hasSeenWelcome) {
@@ -90,6 +86,7 @@ const PrivateLayout: React.FC = () => {
     { key: '/clinicas', icon: <ShopOutlined />, label: 'Consultorios' },
     { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuarios' },
     { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
+    { key: '/confirmar-atencion', icon: <FileTextOutlined />, label: 'Registrar atención' },
     { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
     { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
     { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
@@ -98,7 +95,7 @@ const PrivateLayout: React.FC = () => {
 
   const menuMedico = [
     { key: '/dashboard-medico', icon: <DashboardOutlined />, label: 'Dashboard' },
-    { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
+    { key: '/confirmar-atencion', icon: <FileTextOutlined />, label: 'Procedimientos' },
     { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
     { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
     { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
@@ -108,6 +105,7 @@ const PrivateLayout: React.FC = () => {
   const menuConsultor = [
     { key: '/dashboard-consultor', icon: <EyeOutlined />, label: 'Dashboard' },
     { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
+    { key: '/confirmar-atencion', icon: <FileTextOutlined />, label: 'Registrar atención' },
     { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
     { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
     { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
@@ -291,9 +289,7 @@ const PrivateLayout: React.FC = () => {
                     {activeUser?.nombre || 'Usuario'} {activeUser?.primer_apellido || ''}
                   </div>
 
-                  <div className="user-role">
-                    {getRolName()}
-                  </div>
+                  <div className="user-role">{getRolName()}</div>
                 </div>
 
                 <DownOutlined className="user-dropdown-arrow" />

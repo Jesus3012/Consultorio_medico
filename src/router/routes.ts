@@ -10,6 +10,14 @@ export const ROUTES = {
   CLINIC_DETAIL: '/clinicas/:id',
 
   PATIENTS: '/pacientes',
+
+  // NUEVO MODULO
+  CONFIRMAR_ATENCION: '/confirmar-atencion',
+  BUSQUEDA_PACIENTE: '/busqueda-paciente/:tipo',
+
+  CONSULTA: '/consulta/:pacienteId',
+  PROCEDIMIENTO: '/procedimiento/:pacienteId',
+
   APPOINTMENTS: '/citas',
   MEDICAL_RECORDS: '/expedientes',
   PRESCRIPTIONS: '/recetas',
@@ -44,11 +52,20 @@ export const getDashboardByRole = (rolId?: number) => {
 export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
   [ROLES.ADMIN]: [
     ROUTES.DASHBOARD_ADMIN,
+
     ROUTES.CLINICS,
     ROUTES.CLINIC_NEW,
     ROUTES.CLINIC_DETAIL,
+
     ROUTES.USERS,
+
     ROUTES.PATIENTS,
+
+    ROUTES.CONFIRMAR_ATENCION,
+    ROUTES.BUSQUEDA_PACIENTE,
+    ROUTES.CONSULTA,
+    ROUTES.PROCEDIMIENTO,
+
     ROUTES.APPOINTMENTS,
     ROUTES.MEDICAL_RECORDS,
     ROUTES.PRESCRIPTIONS,
@@ -59,7 +76,14 @@ export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
 
   [ROLES.MEDICO]: [
     ROUTES.DASHBOARD_MEDICO,
+
     ROUTES.PATIENTS,
+
+    ROUTES.CONFIRMAR_ATENCION,
+    ROUTES.BUSQUEDA_PACIENTE,
+    ROUTES.CONSULTA,
+    ROUTES.PROCEDIMIENTO,
+
     ROUTES.APPOINTMENTS,
     ROUTES.MEDICAL_RECORDS,
     ROUTES.PRESCRIPTIONS,
@@ -70,7 +94,12 @@ export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
 
   [ROLES.CONSULTOR]: [
     ROUTES.DASHBOARD_CONSULTOR,
+
     ROUTES.PATIENTS,
+
+    ROUTES.CONFIRMAR_ATENCION,
+    ROUTES.BUSQUEDA_PACIENTE,
+
     ROUTES.APPOINTMENTS,
     ROUTES.PRESCRIPTIONS,
     ROUTES.REPORTS,
@@ -78,11 +107,15 @@ export const ROLE_ALLOWED_ROUTES: Record<number, string[]> = {
   ],
 };
 
-export const canAccessRoute = (rolId: number | undefined, pathname: string) => {
-  const allowedRoutes = ROLE_ALLOWED_ROUTES[Number(rolId)] || [];
+export const canAccessRoute = (
+  rolId: number | undefined,
+  pathname: string
+) => {
+  const allowedRoutes =
+    ROLE_ALLOWED_ROUTES[Number(rolId)] || [];
 
   return allowedRoutes.some((route) => {
-    if (route.includes(':id')) {
+    if (route.includes('/:')) {
       const baseRoute = route.split('/:')[0];
       return pathname.startsWith(baseRoute);
     }

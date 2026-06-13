@@ -17,6 +17,9 @@ import DashboardConsultor from '../pages/DashboardConsultor/DashboardConsultor';
 
 import Clinicas from '../pages/clinicas/Clinicas';
 import Usuarios from '../pages/Usuarios/Usuarios';
+import Pacientes from '../pages/Pacientes/Pacientes';
+
+import ConfirmarAtencion from '../pages/ConfirmarAtencion/ConfirmarAtencion';
 
 import {
   ROUTES,
@@ -24,27 +27,23 @@ import {
   canAccessRoute,
 } from '../router/routes';
 
-const LoadingScreen: React.FC = () => {
-  return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-      }}
-    >
-      <Spin size="large" />
-    </div>
-  );
-};
+const LoadingScreen: React.FC = () => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: '100vh',
+    }}
+  >
+    <Spin size="large" />
+  </div>
+);
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
+  if (isLoading) return <LoadingScreen />;
 
   return isAuthenticated ? <>{children}</> : <Navigate to={ROUTES.LOGIN} replace />;
 };
@@ -52,9 +51,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const RoleRedirect: React.FC = () => {
   const { user, isLoading } = useAuth();
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
+  if (isLoading) return <LoadingScreen />;
 
   return <Navigate to={getDashboardByRole(user?.rol_id)} replace />;
 };
@@ -63,9 +60,7 @@ const RoleRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
+  if (isLoading) return <LoadingScreen />;
 
   const allowed = canAccessRoute(user?.rol_id, location.pathname);
 
@@ -159,10 +154,20 @@ const AppRouter: React.FC = () => {
                 }
               />
 
+              <Route path="/pacientes" element={<Pacientes />} />
+
+              <Route
+                path="/confirmar-atencion"
+                element={
+                  <RoleRoute>
+                    <ConfirmarAtencion />
+                  </RoleRoute>
+                }
+              />
+
               <Route path="/perfil" element={<Perfil />} />
 
               <Route path="*" element={<RoleRedirect />} />
-
             </Route>
           </Routes>
         </AntdApp>
