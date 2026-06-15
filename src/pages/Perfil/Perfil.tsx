@@ -21,6 +21,10 @@ import {
   EyeOutlined,
   StarOutlined,
   IdcardOutlined,
+  BankOutlined,
+  ShopOutlined,
+  ReloadOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import Swal from 'sweetalert2';
 import UserService, { type UserData } from '../../services/user/user.service';
@@ -28,13 +32,30 @@ import './Perfil.css';
 
 const { Title, Text } = Typography;
 
+type UserProfileData = UserData & {
+  empresa_nombre?: string;
+  nombre_empresa?: string;
+  sucursal_nombre?: string;
+  nombre_sucursal?: string;
+  empresa?: {
+    id?: number;
+    nombre?: string;
+    nombre_empresa?: string;
+  };
+  sucursal?: {
+    id?: number;
+    nombre?: string;
+    nombre_sucursal?: string;
+  };
+};
+
 const Perfil: React.FC = () => {
-  const [form] = Form.useForm<UserData>();
+  const [form] = Form.useForm<UserProfileData>();
   const { message } = App.useApp();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [userData, setUserData] = useState<UserData | null>(null);
+  const [userData, setUserData] = useState<UserProfileData | null>(null);
 
   const rolId = Number(userData?.rol_id || 0);
 
@@ -47,23 +68,20 @@ const Perfil: React.FC = () => {
           icon: <StarOutlined />,
           className: 'role-admin',
         };
-
       case 2:
         return {
           name: 'Médico',
-          description: 'Gestión clínica, pacientes, citas y recetas.',
+          description: 'Gestión clínica, pacientes, consultas y recetas.',
           icon: <MedicineBoxOutlined />,
           className: 'role-medico',
         };
-
       case 3:
         return {
           name: 'Consultor',
-          description: 'Acceso de solo consulta a información y reportes.',
+          description: 'Acceso de consulta a información y reportes.',
           icon: <EyeOutlined />,
           className: 'role-consultor',
         };
-
       default:
         return {
           name: 'Usuario',
@@ -75,16 +93,48 @@ const Perfil: React.FC = () => {
   }, [rolId]);
 
   const fullName = useMemo(() => {
-    return `${userData?.nombre || ''} ${userData?.primer_apellido || ''} ${userData?.segundo_apellido || ''}`
+    return `${userData?.nombre || ''} ${userData?.primer_apellido || ''} ${
+      userData?.segundo_apellido || ''
+    }`
       .replace(/\s+/g, ' ')
       .trim();
+  }, [userData]);
+
+  const initials = useMemo(() => {
+    return fullName
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((item) => item[0])
+      .join('')
+      .toUpperCase();
+  }, [fullName]);
+
+  const empresaNombre = useMemo(() => {
+    return (
+      userData?.empresa_nombre ||
+      userData?.nombre_empresa ||
+      userData?.empresa?.nombre ||
+      userData?.empresa?.nombre_empresa ||
+      ''
+    );
+  }, [userData]);
+
+  const sucursalNombre = useMemo(() => {
+    return (
+      userData?.sucursal_nombre ||
+      userData?.nombre_sucursal ||
+      userData?.sucursal?.nombre ||
+      userData?.sucursal?.nombre_sucursal ||
+      ''
+    );
   }, [userData]);
 
   const loadProfile = async () => {
     try {
       setLoading(true);
 
-      const me = await UserService.getMe();
+      const me = (await UserService.getMe()) as UserProfileData;
 
       setUserData(me);
 
@@ -117,7 +167,7 @@ const Perfil: React.FC = () => {
       showCancelButton: true,
       confirmButtonText: 'Sí, restaurar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#50EBEC',
+      confirmButtonColor: '#43d7d8',
       cancelButtonColor: '#d9d9d9',
     }).then((result) => {
       if (result.isConfirmed) {
@@ -133,9 +183,8 @@ const Perfil: React.FC = () => {
       }
     });
   };
-  
 
-  const handleSubmit = async (values: UserData) => {
+  const handleSubmit = async (values: UserProfileData) => {
     try {
       setSaving(true);
 
@@ -146,32 +195,29 @@ const Perfil: React.FC = () => {
         values.email !== userData?.email ||
         (values.telefono || '') !== (userData?.telefono || '') ||
         (rolId === 2 &&
-            (
-            (values.cedula_profesional || '') !== (userData?.cedula_profesional || '') ||
-            (values.especialidad || '') !== (userData?.especialidad || '')
-            ));
+          ((values.cedula_profesional || '') !== (userData?.cedula_profesional || '') ||
+            (values.especialidad || '') !== (userData?.especialidad || '')));
 
-        if (!hasChanges) {
+      if (!hasChanges) {
         Swal.fire({
-            icon: 'info',
-            title: 'Sin cambios',
-            text: 'No has realizado ninguna modificación en tu perfil.',
-            confirmButtonColor: '#50EBEC',
+          icon: 'info',
+          title: 'Sin cambios',
+          text: 'No has realizado ninguna modificación en tu perfil.',
+          confirmButtonColor: '#43d7d8',
         });
 
         return;
-        }
+      }
+
       Swal.fire({
         title: 'Actualizando perfil...',
         text: 'Por favor espera un momento',
         allowOutsideClick: false,
         allowEscapeKey: false,
-        didOpen: () => {
-          Swal.showLoading();
-        },
+        didOpen: () => Swal.showLoading(),
       });
 
-      const payload: Partial<UserData> = {
+      const payload: Partial<UserProfileData> = {
         nombre: values.nombre,
         primer_apellido: values.primer_apellido,
         segundo_apellido: values.segundo_apellido || '',
@@ -184,7 +230,7 @@ const Perfil: React.FC = () => {
         payload.especialidad = values.especialidad || '';
       }
 
-      const updated = await UserService.updateMe(payload);
+      const updated = (await UserService.updateMe(payload)) as UserProfileData;
 
       Swal.close();
 
@@ -195,7 +241,7 @@ const Perfil: React.FC = () => {
         icon: 'success',
         title: 'Perfil actualizado',
         text: 'Tus datos se actualizaron correctamente.',
-        confirmButtonColor: '#50EBEC',
+        confirmButtonColor: '#43d7d8',
         confirmButtonText: 'Aceptar',
       });
     } catch (error: any) {
@@ -226,10 +272,9 @@ const Perfil: React.FC = () => {
     <div className="perfil-page">
       <div className="perfil-header">
         <div>
-          <Text className="perfil-subtitle">Mi cuenta</Text>
           <Title level={2}>Mi perfil</Title>
           <Text type="secondary">
-            Consulta y actualiza tu información personal dentro del sistema.
+            Administra tu información personal y profesional dentro del sistema.
           </Text>
         </div>
 
@@ -239,75 +284,77 @@ const Perfil: React.FC = () => {
         </Tag>
       </div>
 
-      <Row gutter={[24, 24]}>
+      <Row gutter={[24, 24]} align="stretch">
         <Col xs={24} lg={8}>
-          <Card className="perfil-card perfil-summary-card">
-            <div className="perfil-avatar-section">
-              <Avatar
-                size={96}
-                icon={roleInfo.icon}
-                className={`perfil-avatar ${roleInfo.className}`}
-              />
+          <div className="perfil-left-stack">
+            <Card className="perfil-card perfil-summary-card">
+              <div className="perfil-avatar-section">
+                <div className="perfil-avatar-ring">
+                  <Avatar size={96} className={`perfil-avatar ${roleInfo.className}`}>
+                    {initials || roleInfo.icon}
+                  </Avatar>
+                </div>
 
-              <Title level={3}>
-                {fullName || 'Usuario sin nombre'}
-              </Title>
+                <Title level={3}>{fullName || 'Usuario sin nombre'}</Title>
 
-              <Text type="secondary">
-                {userData?.email || 'Sin correo registrado'}
-              </Text>
+                <Text type="secondary">{userData?.email || 'Sin correo registrado'}</Text>
 
-              <div className="perfil-role-box">
-                <div className="perfil-role-icon">
-                  {roleInfo.icon}
+                <div className="perfil-role-box">
+                  <div className="perfil-role-icon">{roleInfo.icon}</div>
+
+                  <div>
+                    <strong>{roleInfo.name}</strong>
+                    <p>{roleInfo.description}</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="perfil-card perfil-work-card">
+              <div className="perfil-work-header">
+                <div className="perfil-work-header-icon">
+                  <SafetyCertificateOutlined />
                 </div>
 
                 <div>
-                  <strong>{roleInfo.name}</strong>
-                  <p>{roleInfo.description}</p>
+                  <strong>Ubicación laboral</strong>
+                  <span>Empresa y sucursal asignadas</span>
                 </div>
               </div>
-            </div>
-          </Card>
 
-          <Card className="perfil-card perfil-info-card">
-            <div className="perfil-info-item">
-              <IdcardOutlined />
-              <div>
-                <span>ID usuario</span>
-                <strong>{userData?.id || '-'}</strong>
-              </div>
-            </div>
+              <div className="perfil-work-grid">
+                <div className="perfil-work-item">
+                  <div className="perfil-work-icon">
+                    <BankOutlined />
+                  </div>
 
-            <div className="perfil-info-item">
-              <UserOutlined />
-              <div>
-                <span>Empresa</span>
-                <strong>{userData?.empresa_id || '-'}</strong>
-              </div>
-            </div>
+                  <span>Empresa</span>
+                  <strong>{empresaNombre || 'Sin empresa asignada'}</strong>
+                </div>
 
-            <div className="perfil-info-item">
-              <UserOutlined />
-              <div>
-                <span>Sucursal</span>
-                <strong>{userData?.sucursal_id || 'Sin sucursal'}</strong>
+                <div className="perfil-work-item">
+                  <div className="perfil-work-icon">
+                    <ShopOutlined />
+                  </div>
+
+                  <span>Sucursal</span>
+                  <strong>{sucursalNombre || 'Sin sucursal asignada'}</strong>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </Col>
 
         <Col xs={24} lg={16}>
-          <Card
-            className="perfil-card perfil-form-card"
-            title="Información personal"
-          >
-            <Form
-              form={form}
-              layout="vertical"
-              onFinish={handleSubmit}
-              className="perfil-form"
-            >
+          <Card className="perfil-card perfil-form-card">
+            <div className="perfil-form-title">
+              <div>
+                <h3>Información personal</h3>
+                <span>Actualiza tus datos permitidos</span>
+              </div>
+            </div>
+
+            <Form form={form} layout="vertical" onFinish={handleSubmit} className="perfil-form">
               <Row gutter={[18, 0]}>
                 <Col xs={24} md={12}>
                   <Form.Item
@@ -315,11 +362,7 @@ const Perfil: React.FC = () => {
                     label="Nombre"
                     rules={[{ required: true, message: 'El nombre es obligatorio' }]}
                   >
-                    <Input
-                      prefix={<UserOutlined />}
-                      placeholder="Nombre"
-                      size="large"
-                    />
+                    <Input prefix={<UserOutlined />} placeholder="Nombre" size="large" />
                   </Form.Item>
                 </Col>
 
@@ -327,9 +370,7 @@ const Perfil: React.FC = () => {
                   <Form.Item
                     name="primer_apellido"
                     label="Primer apellido"
-                    rules={[
-                      { required: true, message: 'El primer apellido es obligatorio' },
-                    ]}
+                    rules={[{ required: true, message: 'El primer apellido es obligatorio' }]}
                   >
                     <Input
                       prefix={<UserOutlined />}
@@ -368,21 +409,14 @@ const Perfil: React.FC = () => {
 
                 <Col xs={24} md={12}>
                   <Form.Item name="telefono" label="Teléfono">
-                    <Input
-                      prefix={<PhoneOutlined />}
-                      placeholder="Teléfono"
-                      size="large"
-                    />
+                    <Input prefix={<PhoneOutlined />} placeholder="Teléfono" size="large" />
                   </Form.Item>
                 </Col>
 
                 {rolId === 2 && (
                   <>
                     <Col xs={24} md={12}>
-                      <Form.Item
-                        name="cedula_profesional"
-                        label="Cédula profesional"
-                      >
+                      <Form.Item name="cedula_profesional" label="Cédula profesional">
                         <Input
                           prefix={<IdcardOutlined />}
                           placeholder="Cédula profesional"
@@ -407,16 +441,14 @@ const Perfil: React.FC = () => {
                   <Col xs={24}>
                     <div className="perfil-readonly-note">
                       {roleInfo.icon}
-                      <span>
-                        Este perfil no requiere información médica profesional.
-                      </span>
+                      <span>Este perfil no requiere información médica profesional.</span>
                     </div>
                   </Col>
                 )}
 
                 <Col xs={24}>
                   <div className="perfil-actions">
-                    <Button onClick={handleRestoreProfile} size="large">
+                    <Button onClick={handleRestoreProfile} size="large" icon={<ReloadOutlined />}>
                       Restaurar datos
                     </Button>
 

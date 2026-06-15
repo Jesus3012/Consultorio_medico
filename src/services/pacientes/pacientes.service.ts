@@ -155,16 +155,12 @@ class PacientesService {
     }
   }
 
-  private buildPayload(data: Partial<PacienteData>): any {
+  private buildPayload(data: any): any {
     const payload: any = {};
 
     const addField = (key: string, value: any) => {
-      if (
-        value !== undefined &&
-        value !== null &&
-        String(value).trim() !== ''
-      ) {
-        payload[key] = value;
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        payload[key] = typeof value === 'string' ? value.trim() : value;
       }
     };
 
@@ -174,95 +170,73 @@ class PacientesService {
       payload.sucursalId = sucursalId;
     }
 
-    addField('nombre', data.nombre?.trim());
+    addField('nombre', data.nombre);
 
     addField(
       'primerApellido',
-      data.primer_apellido?.trim()
+      data.primer_apellido ?? data.primerApellido
     );
 
     addField(
       'segundoApellido',
-      data.segundo_apellido?.trim()
+      data.segundo_apellido ?? data.segundoApellido
     );
 
     addField(
       'fechaNacimiento',
-      data.fecha_nacimiento
+      data.fecha_nacimiento ?? data.fechaNacimiento
     );
 
     addField('sexo', data.sexo);
 
     addField(
       'tipoSangre',
-      data.tipo_sangre
+      data.tipo_sangre ?? data.tipoSangre
     );
 
-    addField(
-      'curp',
-      data.curp?.trim().toUpperCase()
-    );
+    addField('curp', data.curp?.toUpperCase());
 
     addField(
       'curpGenerico',
-      data.curp_generico?.trim().toUpperCase()
+      (data.curp_generico ?? data.curpGenerico)?.toUpperCase()
     );
 
     addField(
       'lugarOrigen',
-      data.lugar_origen?.trim()
+      data.lugar_origen ?? data.lugarOrigen
     );
 
     addField(
       'paisNacimiento',
-      data.pais_nacimiento?.trim()
+      data.pais_nacimiento ?? data.paisNacimiento ?? 'Mexico'
     );
 
     addField(
       'estadoCivil',
-      data.estado_civil
+      data.estado_civil ?? data.estadoCivil
     );
 
-    addField(
-      'escolaridad',
-      data.escolaridad
-    );
-
-    addField(
-      'ocupacion',
-      data.ocupacion?.trim()
-    );
-
-    addField(
-      'telefono',
-      data.telefono?.trim()
-    );
-
-    addField(
-      'celular',
-      data.celular?.trim()
-    );
-
-    addField(
-      'correo',
-      data.correo?.trim()
-    );
+    addField('escolaridad', data.escolaridad);
+    addField('ocupacion', data.ocupacion);
+    addField('telefono', data.telefono);
+    addField('celular', data.celular);
+    addField('correo', data.correo);
 
     addField(
       'numeroExpediente',
-      data.numero_expediente?.trim()
+      data.numero_expediente ?? data.numeroExpediente
     );
 
     return payload;
   }
 
-    async getPacientes(): Promise<PacienteData[]> {
-    const response = await axiosInstance.get(this.basePath, {
-        params: {
-        page: 1,
-        limit: 100,
-        },
-    });
+  async getPacientes(): Promise<PacienteData[]> {
+  const response = await axiosInstance.get(this.basePath, {
+      params: {
+      page: 1,
+      limit: 100,
+      },
+  });
 
     const pacientes = this.normalizeArray(response.data);
 
@@ -279,7 +253,7 @@ class PacientesService {
     return this.normalizePaciente(paciente);
   }
 
-  async createPaciente(data: PacienteData): Promise<PacienteData> {
+  async createPaciente(data: any): Promise<PacienteData> {
     const sucursalId =
       data.sucursal_id ||
       data.sucursalId ||
@@ -289,15 +263,42 @@ class PacientesService {
       throw new Error('No se pudo obtener la sucursal del usuario');
     }
 
-    const payload = this.buildPayload({
-      ...data,
-      sucursal_id: Number(sucursalId),
-    });
+    const payload = {
+      sucursalId: Number(sucursalId),
 
-    const response = await axiosInstance.post(
-      this.basePath,
-      payload
-    );
+      nombre: String(data.nombre ?? '').trim(),
+      primerApellido: String(data.primer_apellido ?? data.primerApellido ?? '').trim(),
+      segundoApellido: String(data.segundo_apellido ?? data.segundoApellido ?? '').trim(),
+
+      fechaNacimiento: data.fecha_nacimiento ?? data.fechaNacimiento ?? '',
+      sexo: data.sexo ?? '',
+      tipoSangre: data.tipo_sangre ?? data.tipoSangre ?? '',
+
+      curp: String(data.curp ?? '').trim().toUpperCase(),
+      curpGenerico: String(data.curp_generico ?? data.curpGenerico ?? '').trim().toUpperCase(),
+
+      lugarOrigen: String(data.lugar_origen ?? data.lugarOrigen ?? '').trim(),
+      paisNacimiento: String(data.pais_nacimiento ?? data.paisNacimiento ?? 'Mexico').trim(),
+      estadoCivil: data.estado_civil ?? data.estadoCivil ?? '',
+      escolaridad: data.escolaridad ?? '',
+      ocupacion: String(data.ocupacion ?? '').trim(),
+
+      telefono: String(data.telefono ?? '').trim(),
+      celular: String(data.celular ?? '').trim(),
+      ...(String(data.correo ?? '').trim()
+      ? { correo: String(data.correo ?? '').trim() }
+      : {}),
+
+      numeroExpediente: String(data.numero_expediente ?? data.numeroExpediente ?? '').trim(),
+    };
+
+    console.log('BODY REAL ENVIADO A /pacientes:', payload);
+
+    const response = await axiosInstance.post(this.basePath, payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     const paciente = this.getResponseData(response.data);
 

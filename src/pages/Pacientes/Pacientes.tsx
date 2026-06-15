@@ -1,14 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Avatar,
   Button,
   Card,
   Col,
-  Drawer,
   Empty,
   Form,
   Input,
-  Modal,
   Row,
   Select,
   Space,
@@ -32,15 +30,66 @@ import {
   HistoryOutlined,
   ReloadOutlined,
   SyncOutlined,
+  CalendarOutlined,
+  IdcardOutlined,
+  HomeOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  CloseOutlined,
+  MedicineBoxOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import Swal from 'sweetalert2';
+
 import PacientesService, {
   type PacienteData,
 } from '../../services/pacientes/pacientes.service';
+
+import ConsultaExterna from './ConsultaExterna';
+import PacienteDetalleModal from './components/PacienteDetalleModal';
+import PacienteAuditoriaModal from './components/PacienteAuditoriaModal';
+import PacienteEditModal from './components/PacienteEditModal';
+
 import './Pacientes.css';
 
 const { Title, Text } = Typography;
+
+const CONSULTA_PACIENTE_STORAGE_KEY = 'pacientes_consulta_paciente_actual';
+
+type DomicilioPacienteData = {
+  calle?: string;
+  numero_exterior?: string;
+  numero_interior?: string;
+  colonia?: string;
+  codigo_postal?: string;
+  municipio?: string;
+  estado_domicilio?: string;
+  referencias_domicilio?: string;
+};
+
+type PacienteFormData = PacienteData & DomicilioPacienteData;
+
+const guardarPacienteConsulta = (paciente: PacienteData | null) => {
+  try {
+    if (!paciente) {
+      localStorage.removeItem(CONSULTA_PACIENTE_STORAGE_KEY);
+      return;
+    }
+
+    localStorage.setItem(CONSULTA_PACIENTE_STORAGE_KEY, JSON.stringify(paciente));
+  } catch {
+    // Evita romper la app si el navegador bloquea localStorage.
+  }
+};
+
+const cargarPacienteConsulta = (): PacienteData | null => {
+  try {
+    const data = localStorage.getItem(CONSULTA_PACIENTE_STORAGE_KEY);
+    return data ? JSON.parse(data) : null;
+  } catch {
+    return null;
+  }
+};
 
 const generarCurpGenerica = () => {
   const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -52,39 +101,65 @@ const generarCurpGenerica = () => {
 };
 
 const Pacientes: React.FC = () => {
-  const [form] = Form.useForm<PacienteData>();
+  const [form] = Form.useForm<PacienteFormData>();
   const { message } = App.useApp();
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pacientes, setPacientes] = useState<PacienteData[]>([]);
 
-  const [nombreBusqueda, setNombreBusqueda] = useState('');
-  const [primerApellidoBusqueda, setPrimerApellidoBusqueda] = useState('');
-  const [segundoApellidoBusqueda, setSegundoApellidoBusqueda] = useState('');
+  const [busquedaPaciente, setBusquedaPaciente] = useState('');
   const [fechaNacimientoBusqueda, setFechaNacimientoBusqueda] = useState('');
   const [numeroExpedienteBusqueda, setNumeroExpedienteBusqueda] = useState('');
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  const [consultaPaciente, setConsultaPaciente] = useState<PacienteData | null>(() =>
+    cargarPacienteConsulta(),
+  );
 
   const [selectedPaciente, setSelectedPaciente] = useState<PacienteData | null>(null);
   const [auditoria, setAuditoria] = useState<any[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [usarCurpGenerica, setUsarCurpGenerica] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [wizardStep, setWizardStep] = useState(0);
 
+  const [datosPrimerPaso, setDatosPrimerPaso] = useState<Partial<PacienteFormData> | null>(null);
+
+  const lastAutoOpenKey = useRef('');
   const desktopPageSize = 10;
   const mobilePageSize = 5;
 
-  const isEditing = Boolean(selectedPaciente?.id && drawerOpen);
+  const abrirConsultaPaciente = (paciente: PacienteData) => {
+    setConsultaPaciente(paciente);
+    guardarPacienteConsulta(paciente);
+  };
+
+  const cerrarConsultaPaciente = () => {
+    setConsultaPaciente(null);
+    guardarPacienteConsulta(null);
+  };
 
   const loadPacientes = async () => {
     try {
       setLoading(true);
       const data = await PacientesService.getPacientes();
       setPacientes(data);
+
+      const pacienteGuardado = cargarPacienteConsulta();
+
+      if (pacienteGuardado) {
+        const actualizado = data.find((item) => String(item.id) === String(pacienteGuardado.id));
+
+        if (actualizado) {
+          setConsultaPaciente(actualizado);
+          guardarPacienteConsulta(actualizado);
+        }
+      }
     } catch (error) {
       console.error(error);
       message.error('No fue posible cargar los pacientes');
@@ -112,41 +187,38 @@ const Pacientes: React.FC = () => {
   const resetPagination = () => setCurrentPage(1);
 
   const limpiarBusqueda = () => {
-    setNombreBusqueda('');
-    setPrimerApellidoBusqueda('');
-    setSegundoApellidoBusqueda('');
+    setBusquedaPaciente('');
     setFechaNacimientoBusqueda('');
     setNumeroExpedienteBusqueda('');
+    lastAutoOpenKey.current = '';
     resetPagination();
   };
 
   const filteredPacientes = useMemo(() => {
     return pacientes.filter((paciente) => {
-      const nombre = String(paciente.nombre || '').toLowerCase();
-      const primerApellido = String(paciente.primer_apellido || '').toLowerCase();
-      const segundoApellido = String(paciente.segundo_apellido || '').toLowerCase();
+      const nombreCompleto = getFullName(paciente).toLowerCase();
       const fechaNacimiento = formatDate(paciente.fecha_nacimiento);
       const numeroExpediente = String(paciente.numero_expediente || '').toLowerCase();
 
       return (
-        (!nombreBusqueda || nombre.includes(nombreBusqueda.toLowerCase().trim())) &&
-        (!primerApellidoBusqueda ||
-          primerApellido.includes(primerApellidoBusqueda.toLowerCase().trim())) &&
-        (!segundoApellidoBusqueda ||
-          segundoApellido.includes(segundoApellidoBusqueda.toLowerCase().trim())) &&
+        (!busquedaPaciente ||
+          nombreCompleto.includes(busquedaPaciente.toLowerCase().trim())) &&
         (!fechaNacimientoBusqueda || fechaNacimiento === fechaNacimientoBusqueda) &&
         (!numeroExpedienteBusqueda ||
           numeroExpediente.includes(numeroExpedienteBusqueda.toLowerCase().trim()))
       );
     });
-  }, [
-    pacientes,
-    nombreBusqueda,
-    primerApellidoBusqueda,
-    segundoApellidoBusqueda,
-    fechaNacimientoBusqueda,
-    numeroExpedienteBusqueda,
-  ]);
+  }, [pacientes, busquedaPaciente, fechaNacimientoBusqueda, numeroExpedienteBusqueda]);
+
+  const hayBusquedaActiva = Boolean(
+    busquedaPaciente.trim() || fechaNacimientoBusqueda || numeroExpedienteBusqueda.trim(),
+  );
+
+  const busquedaSuficiente = Boolean(
+    busquedaPaciente.trim().length >= 3 ||
+      fechaNacimientoBusqueda ||
+      numeroExpedienteBusqueda.trim().length >= 1,
+  );
 
   const paginatedMobilePacientes = useMemo(() => {
     const start = (currentPage - 1) * mobilePageSize;
@@ -154,7 +226,9 @@ const Pacientes: React.FC = () => {
   }, [filteredPacientes, currentPage]);
 
   const openCreate = () => {
+    setWizardStep(0);
     setSelectedPaciente(null);
+    setDatosPrimerPaso(null);
     setUsarCurpGenerica(false);
     form.resetFields();
 
@@ -165,27 +239,152 @@ const Pacientes: React.FC = () => {
       pais_nacimiento: 'Mexico',
       curp: '',
       curp_generico: '',
-    } as Partial<PacienteData>);
+    } as Partial<PacienteFormData>);
 
-    setDrawerOpen(true);
+    setWizardOpen(true);
   };
 
-  const openEdit = (paciente: PacienteData) => {
-    const tieneCurpGenerica =
-      Boolean(paciente.curp_generico) && paciente.curp === paciente.curp_generico;
+  const openCreateFromSearch = () => {
+    const partes = busquedaPaciente.trim().split(/\s+/).filter(Boolean);
 
-    setSelectedPaciente(paciente);
-    setUsarCurpGenerica(tieneCurpGenerica);
+    setWizardStep(0);
+    setSelectedPaciente(null);
+    setDatosPrimerPaso(null);
+    setUsarCurpGenerica(false);
+    form.resetFields();
 
     form.setFieldsValue({
-      ...paciente,
-      fecha_nacimiento: formatDate(paciente.fecha_nacimiento),
-      sexo: paciente.sexo || undefined,
-      tipo_sangre: paciente.tipo_sangre || undefined,
-      estado_civil: paciente.estado_civil || undefined,
+      nombre: partes[0] || '',
+      primer_apellido: partes[1] || '',
+      segundo_apellido: partes.slice(2).join(' ') || '',
+      fecha_nacimiento: fechaNacimientoBusqueda,
+      numero_expediente: numeroExpedienteBusqueda.trim(),
+      pais_nacimiento: 'Mexico',
+      curp: '',
+      curp_generico: '',
+      sexo: undefined,
+      tipo_sangre: undefined,
+      estado_civil: undefined,
+    } as Partial<PacienteFormData>);
+
+    setWizardOpen(true);
+  };
+
+  const showRedirectToWizard = async () => {
+    const result = await Swal.fire({
+      icon: 'info',
+      title: 'Paciente no encontrado',
+      text: 'No se encontró ningún expediente con esos datos. Puede abrir el asistente de registro o cancelar para corregir la búsqueda.',
+      showCancelButton: true,
+      confirmButtonText: 'Ir al registro',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#43d7d8',
+      cancelButtonColor: '#94a3b8',
+      reverseButtons: true,
+      allowOutsideClick: false,
+      allowEscapeKey: true,
     });
 
-    setDrawerOpen(true);
+    if (result.isConfirmed) {
+      openCreateFromSearch();
+    } else {
+      lastAutoOpenKey.current = `${busquedaPaciente.trim()}|${fechaNacimientoBusqueda}|${numeroExpedienteBusqueda.trim()}`;
+    }
+  };
+
+  const tryOpenCreateFromSearch = () => {
+    if (busquedaSuficiente && !loading && filteredPacientes.length === 0 && !wizardOpen) {
+      const autoOpenKey = `${busquedaPaciente.trim()}|${fechaNacimientoBusqueda}|${numeroExpedienteBusqueda.trim()}`;
+      lastAutoOpenKey.current = autoOpenKey;
+      showRedirectToWizard();
+    }
+  };
+
+  const handleSearchEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      tryOpenCreateFromSearch();
+    }
+  };
+
+  useEffect(() => {
+    const autoOpenKey = `${busquedaPaciente.trim()}|${fechaNacimientoBusqueda}|${numeroExpedienteBusqueda.trim()}`;
+
+    const timer = setTimeout(() => {
+      if (
+        busquedaSuficiente &&
+        !loading &&
+        filteredPacientes.length === 0 &&
+        !wizardOpen &&
+        autoOpenKey !== lastAutoOpenKey.current
+      ) {
+        lastAutoOpenKey.current = autoOpenKey;
+        showRedirectToWizard();
+      }
+    }, 950);
+
+    return () => clearTimeout(timer);
+  }, [
+    busquedaPaciente,
+    fechaNacimientoBusqueda,
+    numeroExpedienteBusqueda,
+    busquedaSuficiente,
+    filteredPacientes.length,
+    loading,
+    wizardOpen,
+  ]);
+
+  const openEdit = (paciente: PacienteData) => {
+    setSelectedPaciente(paciente);
+    setEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (values: PacienteData) => {
+    if (!selectedPaciente?.id) return;
+
+    try {
+      setSaving(true);
+
+      const payload: PacienteData = {
+        ...selectedPaciente,
+        ...values,
+        curp: values.curp?.trim().toUpperCase() || '',
+        nombre: values.nombre?.trim(),
+        primer_apellido: values.primer_apellido?.trim(),
+        segundo_apellido: values.segundo_apellido?.trim() || '',
+        telefono: values.telefono?.trim() || '',
+        celular: values.celular?.trim() || '',
+        correo: values.correo?.trim() || '',
+        numero_expediente: values.numero_expediente?.trim() || '',
+      };
+
+      await PacientesService.updatePaciente(selectedPaciente.id, payload);
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Paciente actualizado',
+        text: 'Los datos del paciente se actualizaron correctamente.',
+        confirmButtonColor: '#43d7d8',
+      });
+
+      setEditModalOpen(false);
+      setSelectedPaciente(null);
+
+      if (consultaPaciente?.id === selectedPaciente.id) {
+        abrirConsultaPaciente(payload);
+      }
+
+      loadPacientes();
+    } catch (error: any) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al actualizar',
+        text: error?.message || 'No fue posible actualizar el paciente',
+        confirmButtonColor: '#ff4d4f',
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const openDetail = (paciente: PacienteData) => {
@@ -200,7 +399,6 @@ const Pacientes: React.FC = () => {
       setSelectedPaciente(paciente);
       setAuditOpen(true);
       setAuditLoading(true);
-
       const data = await PacientesService.getAuditoriaPaciente(paciente.id);
       setAuditoria(data);
     } catch (error) {
@@ -211,9 +409,11 @@ const Pacientes: React.FC = () => {
     }
   };
 
-  const handleCloseDrawer = () => {
-    setDrawerOpen(false);
+  const handleCloseWizard = () => {
+    setWizardStep(0);
+    setWizardOpen(false);
     setSelectedPaciente(null);
+    setDatosPrimerPaso(null);
     setUsarCurpGenerica(false);
     form.resetFields();
   };
@@ -227,12 +427,12 @@ const Pacientes: React.FC = () => {
       form.setFieldsValue({
         curp: curpGenerica,
         curp_generico: curpGenerica,
-      } as Partial<PacienteData>);
+      } as Partial<PacienteFormData>);
     } else {
       form.setFieldsValue({
         curp: '',
         curp_generico: '',
-      } as Partial<PacienteData>);
+      } as Partial<PacienteFormData>);
     }
   };
 
@@ -242,66 +442,104 @@ const Pacientes: React.FC = () => {
     form.setFieldsValue({
       curp: curpGenerica,
       curp_generico: curpGenerica,
-    } as Partial<PacienteData>);
+    } as Partial<PacienteFormData>);
   };
 
-  const handleSubmit = async (values: PacienteData) => {
+  const goNextWizardStep = async () => {
+    try {
+      const values = await form.validateFields([
+        'nombre',
+        'primer_apellido',
+        'fecha_nacimiento',
+        'sexo',
+        'tipo_sangre',
+        'curp',
+        'numero_expediente',
+      ]);
+
+      const todosLosValores = form.getFieldsValue(true);
+
+      setDatosPrimerPaso({
+        ...todosLosValores,
+        ...values,
+      });
+
+      setWizardStep(1);
+    } catch {
+      message.warning('Completa los datos obligatorios del paciente');
+    }
+  };
+
+  const goPrevWizardStep = () => {
+    if (datosPrimerPaso) {
+      form.setFieldsValue(datosPrimerPaso);
+    }
+
+    setWizardStep(0);
+  };
+
+  const submitWizard = () => {
+    form.submit();
+  };
+
+  const handleSubmit = async (values: PacienteFormData) => {
     try {
       setSaving(true);
 
-      const curpFinal = values.curp?.trim().toUpperCase() || '';
+      const datosFinales: PacienteFormData = {
+        ...values,
+        ...datosPrimerPaso,
+      } as PacienteFormData;
+
+      const curpFinal = datosFinales.curp?.trim().toUpperCase() || '';
 
       const payload: PacienteData = {
-        nombre: values.nombre?.trim(),
-        primer_apellido: values.primer_apellido?.trim(),
-        segundo_apellido: values.segundo_apellido?.trim() || '',
-        fecha_nacimiento: values.fecha_nacimiento || '',
-        sexo: values.sexo || '',
-        tipo_sangre: values.tipo_sangre || '',
+        nombre: datosFinales.nombre?.trim() || '',
+        primer_apellido: datosFinales.primer_apellido?.trim() || '',
+        segundo_apellido: datosFinales.segundo_apellido?.trim() || '',
+        fecha_nacimiento: datosFinales.fecha_nacimiento || '',
+        sexo: datosFinales.sexo || '',
+        tipo_sangre: datosFinales.tipo_sangre || '',
         curp: curpFinal,
         curp_generico: usarCurpGenerica
           ? curpFinal
-          : values.curp_generico?.trim().toUpperCase() || '',
-        lugar_origen: values.lugar_origen?.trim() || '',
-        pais_nacimiento: values.pais_nacimiento?.trim() || 'Mexico',
-        estado_civil: values.estado_civil || '',
-        escolaridad: values.escolaridad || '',
-        ocupacion: values.ocupacion?.trim() || '',
-        telefono: values.telefono?.trim() || '',
-        celular: values.celular?.trim() || '',
-        correo: values.correo?.trim() || '',
-        numero_expediente: values.numero_expediente?.trim() || '',
+          : datosFinales.curp_generico?.trim().toUpperCase() || '',
+        lugar_origen: datosFinales.lugar_origen?.trim() || '',
+        pais_nacimiento: datosFinales.pais_nacimiento?.trim() || 'Mexico',
+        estado_civil: datosFinales.estado_civil || '',
+        escolaridad: datosFinales.escolaridad || '',
+        ocupacion: datosFinales.ocupacion?.trim() || '',
+        telefono: datosFinales.telefono?.trim() || '',
+        celular: datosFinales.celular?.trim() || '',
+        correo: datosFinales.correo?.trim() || '',
+        numero_expediente: datosFinales.numero_expediente?.trim() || '',
         activo: true,
       };
 
       Swal.fire({
-        title: isEditing ? 'Actualizando paciente...' : 'Registrando paciente...',
+        title: 'Registrando paciente...',
         text: 'Por favor espera un momento',
         allowOutsideClick: false,
         allowEscapeKey: false,
         didOpen: () => Swal.showLoading(),
       });
 
-      if (isEditing && selectedPaciente?.id) {
-        await PacientesService.updatePaciente(selectedPaciente.id, payload);
-      } else {
-        await PacientesService.createPaciente(payload);
-      }
+      const response = await PacientesService.createPaciente(payload);
+      const pacienteGuardado: PacienteData = response || payload;
 
       Swal.close();
 
       await Swal.fire({
         icon: 'success',
-        title: isEditing ? 'Paciente actualizado' : 'Paciente registrado',
-        text: isEditing
-          ? 'La información del paciente se actualizó correctamente.'
-          : 'El paciente se registró correctamente.',
+        title: 'Paciente registrado',
+        text: 'El paciente se registró correctamente. Será enviado a consulta externa.',
         confirmButtonColor: '#36c6c7',
       });
 
-      handleCloseDrawer();
-      resetPagination();
-      loadPacientes();
+      handleCloseWizard();
+      limpiarBusqueda();
+      await loadPacientes();
+      abrirConsultaPaciente(pacienteGuardado);
     } catch (error: any) {
       Swal.close();
 
@@ -357,6 +595,10 @@ const Pacientes: React.FC = () => {
         confirmButtonColor: '#36c6c7',
       });
 
+      if (consultaPaciente?.id === paciente.id) {
+        cerrarConsultaPaciente();
+      }
+
       resetPagination();
       loadPacientes();
     } catch (error: any) {
@@ -375,15 +617,14 @@ const Pacientes: React.FC = () => {
     {
       title: 'Paciente',
       key: 'paciente',
-      width: '25%',
+      width: '26%',
       render: (_, paciente) => (
-        <Space size={8} className="paciente-cell-space">
+        <Space size={10} className="paciente-cell-space">
           <Avatar icon={<UserOutlined />} className="paciente-avatar" />
-
           <div className="paciente-name-cell">
             <strong title={getFullName(paciente)}>{getFullName(paciente)}</strong>
             <span title={paciente.numero_expediente || 'Sin expediente'}>
-              {paciente.numero_expediente || 'Sin expediente'}
+              Exp. {paciente.numero_expediente || 'Sin expediente'}
             </span>
           </div>
         </Space>
@@ -396,12 +637,6 @@ const Pacientes: React.FC = () => {
       render: (fecha) => formatDate(fecha),
     },
     {
-      title: 'Expediente',
-      dataIndex: 'numero_expediente',
-      width: '12%',
-      render: (expediente) => expediente || '-',
-    },
-    {
       title: 'CURP',
       dataIndex: 'curp',
       width: '18%',
@@ -410,7 +645,7 @@ const Pacientes: React.FC = () => {
     {
       title: 'Contacto',
       key: 'contacto',
-      width: '18%',
+      width: '16%',
       render: (_, paciente) => (
         <div className="paciente-contact-cell">
           <strong title={paciente.celular || paciente.telefono || '-'}>
@@ -435,494 +670,672 @@ const Pacientes: React.FC = () => {
     {
       title: 'Acciones',
       key: 'acciones',
-      width: '12%',
+      width: '21%',
       align: 'center',
       render: (_, paciente) => (
-        <Space size={3} className="paciente-actions-space">
-          <Tooltip title="Ver detalle">
-            <Button icon={<EyeOutlined />} onClick={() => openDetail(paciente)} />
+        <div className="paciente-actions-wrap">
+          <Tooltip title="Abrir consulta externa">
+            <Button
+              type="primary"
+              icon={<MedicineBoxOutlined />}
+              className="paciente-consulta-btn"
+              onClick={() => abrirConsultaPaciente(paciente)}
+            >
+              Consulta
+            </Button>
           </Tooltip>
 
-          <Tooltip title="Auditoría">
-            <Button icon={<HistoryOutlined />} onClick={() => openAudit(paciente)} />
-          </Tooltip>
+          <Space size={4} className="paciente-actions-space">
+            <Tooltip title="Ver detalle">
+              <Button icon={<EyeOutlined />} onClick={() => openDetail(paciente)} />
+            </Tooltip>
 
-          <Tooltip title="Editar">
-            <Button icon={<EditOutlined />} onClick={() => openEdit(paciente)} />
-          </Tooltip>
+            <Tooltip title="Auditoría">
+              <Button icon={<HistoryOutlined />} onClick={() => openAudit(paciente)} />
+            </Tooltip>
 
-          <Tooltip title="Eliminar">
-            <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(paciente)} />
-          </Tooltip>
-        </Space>
+            <Tooltip title="Editar">
+              <Button icon={<EditOutlined />} onClick={() => openEdit(paciente)} />
+            </Tooltip>
+
+            <Tooltip title="Eliminar">
+              <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(paciente)} />
+            </Tooltip>
+          </Space>
+        </div>
       ),
     },
   ];
 
+  if (consultaPaciente) {
+    return (
+      <ConsultaExterna
+        paciente={consultaPaciente}
+        onBack={cerrarConsultaPaciente}
+      />
+    );
+  }
+
   return (
     <div className="pacientes-page">
-      <div className="pacientes-header">
-        <div>
-          <Text className="pacientes-subtitle">Expediente electrónico</Text>
-
-          <Title level={2}>Buscar paciente</Title>
-
-          <Text type="secondary">
-            Localiza pacientes por nombre, fecha de nacimiento o número de expediente.
-          </Text>
-        </div>
-
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          className="pacientes-primary-btn"
-          onClick={openCreate}
-        >
-          Crear paciente
-        </Button>
-      </div>
-
-      <Card className="pacientes-card">
-        <div className="pacientes-search-panel">
-          <div className="pacientes-search-title">
-            <SearchOutlined />
-            <span>Buscar paciente</span>
-          </div>
-
-          <div className="pacientes-search-form">
-            <Input
-              placeholder="Nombre"
-              value={nombreBusqueda}
-              onChange={(e) => {
-                setNombreBusqueda(e.target.value);
-                resetPagination();
-              }}
-              allowClear
-            />
-
-            <Input
-              placeholder="Primer apellido"
-              value={primerApellidoBusqueda}
-              onChange={(e) => {
-                setPrimerApellidoBusqueda(e.target.value);
-                resetPagination();
-              }}
-              allowClear
-            />
-
-            <Input
-              placeholder="Segundo apellido"
-              value={segundoApellidoBusqueda}
-              onChange={(e) => {
-                setSegundoApellidoBusqueda(e.target.value);
-                resetPagination();
-              }}
-              allowClear
-            />
-
-            <Input
-              type="date"
-              value={fechaNacimientoBusqueda}
-              onChange={(e) => {
-                setFechaNacimientoBusqueda(e.target.value);
-                resetPagination();
-              }}
-            />
-
-            <Input
-              placeholder="Número expediente"
-              value={numeroExpedienteBusqueda}
-              onChange={(e) => {
-                setNumeroExpedienteBusqueda(e.target.value);
-                resetPagination();
-              }}
-              allowClear
-            />
-
-            <Button type="primary" icon={<SearchOutlined />} className="pacientes-search-btn">
-              Buscar
-            </Button>
-
-            <Button onClick={limpiarBusqueda}>Limpiar</Button>
-
-            <Button icon={<ReloadOutlined />} onClick={loadPacientes}>
-              Actualizar
-            </Button>
-          </div>
-        </div>
-
-        <Table
-          className="pacientes-table-desktop"
-          columns={columns}
-          dataSource={filteredPacientes}
-          rowKey={(record) => String(record.id)}
-          loading={loading}
-          size="small"
-          tableLayout="fixed"
-          pagination={{
-            current: currentPage,
-            pageSize: desktopPageSize,
-            total: filteredPacientes.length,
-            showSizeChanger: false,
-            position: ['bottomCenter'],
-            onChange: (page) => setCurrentPage(page),
-          }}
-          locale={{
-            emptyText: <Empty description="No hay pacientes registrados" />,
-          }}
-        />
-
-        <div className="pacientes-mobile-list">
-          {loading ? (
-            <div className="pacientes-mobile-loading">
-              <Spin />
+      {!wizardOpen ? (
+        <>
+          <div className="pacientes-hero">
+            <div>
+              <Text className="pacientes-subtitle">Expediente electrónico</Text>
+              <Title level={2}>Pacientes</Title>
+              <Text type="secondary">
+                Busca en tiempo real. Si no existe, se notificará y se abrirá el wizard.
+              </Text>
             </div>
-          ) : paginatedMobilePacientes.length ? (
-            paginatedMobilePacientes.map((paciente) => (
-              <Card key={paciente.id} className="paciente-mobile-card">
-                <div className="paciente-mobile-header">
-                  <Avatar icon={<UserOutlined />} className="paciente-avatar" />
-
-                  <div>
-                    <strong>{getFullName(paciente)}</strong>
-                    <p>{paciente.numero_expediente || 'Sin expediente'}</p>
-                  </div>
-                </div>
-
-                <div className="paciente-mobile-extra">
-                  <p>
-                    <strong>Fecha nacimiento:</strong> {formatDate(paciente.fecha_nacimiento)}
-                  </p>
-
-                  <p>
-                    <strong>CURP:</strong> {paciente.curp || 'Sin CURP'}
-                  </p>
-
-                  <p>
-                    <strong>Contacto:</strong> {paciente.celular || paciente.telefono || '-'}
-                  </p>
-
-                  <p>
-                    <strong>Correo:</strong> {paciente.correo || 'Sin correo'}
-                  </p>
-                </div>
-
-                <div className="paciente-mobile-actions">
-                  <Button icon={<EyeOutlined />} onClick={() => openDetail(paciente)}>
-                    Ver
-                  </Button>
-
-                  <Button icon={<EditOutlined />} onClick={() => openEdit(paciente)}>
-                    Editar
-                  </Button>
-
-                  <Button icon={<HistoryOutlined />} onClick={() => openAudit(paciente)}>
-                    Audit.
-                  </Button>
-
-                  <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(paciente)}>
-                    Eliminar
-                  </Button>
-                </div>
-              </Card>
-            ))
-          ) : (
-            <Empty description="No hay pacientes registrados" />
-          )}
-
-          {filteredPacientes.length > mobilePageSize && (
-            <Pagination
-              current={currentPage}
-              pageSize={mobilePageSize}
-              total={filteredPacientes.length}
-              showSizeChanger={false}
-              size="small"
-              onChange={(page) => setCurrentPage(page)}
-              className="pacientes-mobile-pagination"
-            />
-          )}
-        </div>
-      </Card>
-
-      <Drawer
-        title={isEditing ? 'Editar paciente' : 'Nuevo paciente'}
-        width={860}
-        open={drawerOpen}
-        onClose={handleCloseDrawer}
-        destroyOnHidden
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{
-            sexo: undefined,
-            tipo_sangre: undefined,
-            estado_civil: undefined,
-            pais_nacimiento: 'Mexico',
-          }}
-        >
-          <Row gutter={[16, 0]}>
-            <Col xs={24}>
-              <div className="pacientes-curp-switch">
-                <div>
-                  <strong>Registro con CURP genérica</strong>
-                  <p>Actívalo si el paciente no cuenta con CURP.</p>
-                </div>
-
-                <Switch checked={usarCurpGenerica} onChange={handleToggleCurpGenerica} />
-              </div>
-
-              <Divider />
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="nombre" label="Nombre" rules={[{ required: true }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="primer_apellido" label="Primer apellido" rules={[{ required: true }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="segundo_apellido" label="Segundo apellido">
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="fecha_nacimiento" label="Fecha de nacimiento" rules={[{ required: true }]}>
-                <Input type="date" max={new Date().toISOString().split('T')[0]} />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="sexo" label="Sexo" rules={[{ required: true }]}>
-                <Select
-                  options={[
-                    { value: 'F', label: 'Femenino' },
-                    { value: 'M', label: 'Masculino' },
-                  ]}
-                  allowClear
-                />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="tipo_sangre" label="Tipo de sangre" rules={[{ required: true }]}>
-                <Select
-                  options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((v) => ({
-                    value: v,
-                    label: v,
-                  }))}
-                  allowClear
-                />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={usarCurpGenerica ? 12 : 24}>
-              <Form.Item
-                name="curp"
-                label={usarCurpGenerica ? 'CURP generada' : 'CURP'}
-                rules={[
-                  { required: true },
-                  { len: 18, message: 'La CURP debe tener 18 caracteres' },
-                ]}
-              >
-                <Input maxLength={18} disabled={usarCurpGenerica} />
-              </Form.Item>
-            </Col>
-
-            {usarCurpGenerica && (
-              <Col xs={24} md={12}>
-                <Form.Item label="Regenerar CURP genérica">
-                  <Button icon={<SyncOutlined />} onClick={handleRegenerarCurpGenerica} block>
-                    Generar otra
-                  </Button>
-                </Form.Item>
-              </Col>
-            )}
-
-            <Form.Item name="curp_generico" hidden>
-              <Input />
-            </Form.Item>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="lugar_origen" label="Lugar de origen">
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="pais_nacimiento" label="País de nacimiento">
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="estado_civil" label="Estado civil">
-                <Select
-                  allowClear
-                  options={[
-                    'Soltero',
-                    'Casado',
-                    'Divorciado',
-                    'Viudo',
-                    'Union libre',
-                  ].map((v) => ({
-                    value: v,
-                    label: v,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="escolaridad" label="Escolidad">
-                <Select
-                  allowClear
-                  options={[
-                    'Primaria',
-                    'Secundaria',
-                    'Preparatoria',
-                    'Licenciatura',
-                    'Maestria',
-                    'Doctorado',
-                    'Otro',
-                  ].map((v) => ({
-                    value: v,
-                    label: v,
-                  }))}
-                />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="ocupacion" label="Ocupación">
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="numero_expediente" label="Número de expediente">
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="telefono" label="Teléfono">
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} md={12}>
-              <Form.Item name="celular" label="Celular">
-                <Input />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24}>
-              <Form.Item name="correo" label="Correo" rules={[{ type: 'email' }]}>
-                <Input />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <div className="pacientes-drawer-actions">
-            <Button onClick={handleCloseDrawer}>Cancelar</Button>
 
             <Button
               type="primary"
-              htmlType="submit"
-              loading={saving}
+              icon={<PlusOutlined />}
               className="pacientes-primary-btn"
+              onClick={openCreate}
             >
-              {isEditing ? 'Actualizar paciente' : 'Registrar paciente'}
+              Crear paciente
             </Button>
           </div>
-        </Form>
-      </Drawer>
 
-      <Modal
-        open={detailOpen}
-        title="Detalle del paciente"
-        onCancel={() => setDetailOpen(false)}
-        footer={[
-          <Button key="close" onClick={() => setDetailOpen(false)}>
-            Cerrar
-          </Button>,
-        ]}
-      >
-        {selectedPaciente && (
-          <div className="paciente-detail">
-            <Avatar size={72} icon={<UserOutlined />} className="paciente-detail-avatar" />
-
-            <Title level={4}>{getFullName(selectedPaciente)}</Title>
-
-            <Text type="secondary">{selectedPaciente.correo || 'Sin correo'}</Text>
-
-            <div className="paciente-detail-grid">
-              <div>
-                <strong>Expediente:</strong>
-                <span>{selectedPaciente.numero_expediente || '-'}</span>
+          <Card className="pacientes-card">
+            <div className="pacientes-smart-search">
+              <div className="pacientes-radar">
+                <span />
+                <SearchOutlined />
               </div>
 
-              <div>
-                <strong>Fecha nacimiento:</strong>
-                <span>{formatDate(selectedPaciente.fecha_nacimiento)}</span>
+              <div className="pacientes-search-main">
+                <label>Buscar paciente</label>
+                <Input
+                  className="pacientes-name-search"
+                  placeholder="Nombre o apellidos..."
+                  value={busquedaPaciente}
+                  onChange={(e) => {
+                    setBusquedaPaciente(e.target.value);
+                    resetPagination();
+                  }}
+                  onKeyDown={handleSearchEnter}
+                  allowClear
+                />
               </div>
 
-              <div>
-                <strong>CURP:</strong>
-                <span>{selectedPaciente.curp || '-'}</span>
+              <div className="pacientes-filter-group">
+                <label>Fecha de nacimiento</label>
+
+                <div className="pacientes-filter-pill">
+                  <CalendarOutlined />
+
+                  <Input
+                    type="date"
+                    value={fechaNacimientoBusqueda}
+                    onChange={(e) => {
+                      setFechaNacimientoBusqueda(e.target.value);
+                      resetPagination();
+                    }}
+                    onKeyDown={handleSearchEnter}
+                  />
+                </div>
               </div>
 
-              <div>
-                <strong>Teléfono:</strong>
-                <span>{selectedPaciente.telefono || '-'}</span>
+              <div className="pacientes-filter-group">
+                <label>Número de expediente</label>
+
+                <div className="pacientes-filter-pill">
+                  <IdcardOutlined />
+
+                  <Input
+                    placeholder="Expediente"
+                    value={numeroExpedienteBusqueda}
+                    onChange={(e) => {
+                      setNumeroExpedienteBusqueda(e.target.value);
+                      resetPagination();
+                    }}
+                    onKeyDown={handleSearchEnter}
+                    allowClear
+                  />
+                </div>
               </div>
 
-              <div>
-                <strong>Celular:</strong>
-                <span>{selectedPaciente.celular || '-'}</span>
-              </div>
-
-              <div>
-                <strong>Sexo:</strong>
-                <span>{selectedPaciente.sexo || '-'}</span>
-              </div>
-
-              <div>
-                <strong>Tipo de sangre:</strong>
-                <span>{selectedPaciente.tipo_sangre || '-'}</span>
+              <div className="pacientes-search-actions">
+                <Button onClick={limpiarBusqueda}>Limpiar</Button>
+                <Button icon={<ReloadOutlined />} onClick={loadPacientes}>
+                  Actualizar
+                </Button>
               </div>
             </div>
-          </div>
-        )}
-      </Modal>
 
-      <Modal
+            <div className="pacientes-summary-grid">
+              <div>
+                <strong>{pacientes.length}</strong>
+                <span>Registrados</span>
+              </div>
+
+              <div>
+                <strong>{filteredPacientes.length}</strong>
+                <span>Coincidencias</span>
+              </div>
+
+              <div>
+                <strong>{hayBusquedaActiva ? 'Activo' : 'Libre'}</strong>
+                <span>Filtro</span>
+              </div>
+            </div>
+
+            <Table
+              className="pacientes-table-desktop"
+              columns={columns}
+              dataSource={filteredPacientes}
+              rowKey={(record) => String(record.id)}
+              loading={loading}
+              size="small"
+              tableLayout="fixed"
+              pagination={{
+                current: currentPage,
+                pageSize: desktopPageSize,
+                total: filteredPacientes.length,
+                showSizeChanger: false,
+                position: ['bottomCenter'],
+                onChange: (page) => setCurrentPage(page),
+              }}
+              locale={{
+                emptyText: hayBusquedaActiva ? (
+                  <Empty description="Paciente no encontrado. Puede registrarlo o corregir la búsqueda." />
+                ) : (
+                  <Empty description="No hay pacientes registrados" />
+                ),
+              }}
+            />
+
+            <div className="pacientes-mobile-list">
+              {loading ? (
+                <div className="pacientes-mobile-loading">
+                  <Spin />
+                </div>
+              ) : paginatedMobilePacientes.length ? (
+                paginatedMobilePacientes.map((paciente) => (
+                  <Card key={paciente.id} className="paciente-mobile-card">
+                    <div className="paciente-mobile-header">
+                      <Avatar icon={<UserOutlined />} className="paciente-avatar" />
+                      <div>
+                        <strong>{getFullName(paciente)}</strong>
+                        <p>{paciente.numero_expediente || 'Sin expediente'}</p>
+                      </div>
+                    </div>
+
+                    <div className="paciente-mobile-extra">
+                      <p>
+                        <strong>Fecha nacimiento:</strong> {formatDate(paciente.fecha_nacimiento)}
+                      </p>
+                      <p>
+                        <strong>CURP:</strong> {paciente.curp || 'Sin CURP'}
+                      </p>
+                      <p>
+                        <strong>Contacto:</strong> {paciente.celular || paciente.telefono || '-'}
+                      </p>
+                      <p>
+                        <strong>Correo:</strong> {paciente.correo || 'Sin correo'}
+                      </p>
+                    </div>
+
+                    <div className="paciente-mobile-actions">
+                      <Button
+                        type="primary"
+                        icon={<MedicineBoxOutlined />}
+                        className="paciente-consulta-mobile-btn"
+                        onClick={() => abrirConsultaPaciente(paciente)}
+                      >
+                        Consulta externa
+                      </Button>
+
+                      <div className="paciente-mobile-secondary-actions">
+                        <Button icon={<EyeOutlined />} onClick={() => openDetail(paciente)}>
+                          Ver
+                        </Button>
+
+                        <Button icon={<HistoryOutlined />} onClick={() => openAudit(paciente)}>
+                          Auditoría
+                        </Button>
+
+                        <Button icon={<EditOutlined />} onClick={() => openEdit(paciente)}>
+                          Editar
+                        </Button>
+
+                        <Button danger icon={<DeleteOutlined />} onClick={() => handleDelete(paciente)}>
+                          Eliminar
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <Empty description="No hay pacientes registrados" />
+              )}
+
+              {filteredPacientes.length > mobilePageSize && (
+                <Pagination
+                  current={currentPage}
+                  pageSize={mobilePageSize}
+                  total={filteredPacientes.length}
+                  showSizeChanger={false}
+                  size="small"
+                  onChange={(page) => setCurrentPage(page)}
+                  className="pacientes-mobile-pagination"
+                />
+              )}
+            </div>
+          </Card>
+        </>
+      ) : (
+        <div className="pacientes-wizard-page">
+          <div className="pacientes-wizard-topbar">
+            <div>
+              <Text className="pacientes-subtitle">Nuevo expediente</Text>
+              <Title level={2}>Registro de paciente</Title>
+            </div>
+
+            <Button icon={<CloseOutlined />} onClick={handleCloseWizard}>
+              Cerrar
+            </Button>
+          </div>
+
+          <div className="pacientes-wizard-layout">
+            <aside className="pacientes-wizard-side">
+              <div className="pacientes-wizard-brand">
+                <div className="pacientes-wizard-logo">
+                  <UserOutlined />
+                </div>
+
+                <strong>Asistente de registro</strong>
+                <span>Completa el expediente en pasos claros.</span>
+              </div>
+
+              <div className="pacientes-wizard-progress">
+                <div
+                  className={`wizard-step-item ${
+                    wizardStep === 0 ? 'active' : wizardStep > 0 ? 'done' : ''
+                  }`}
+                >
+                  <div className="wizard-step-icon">
+                    <UserOutlined />
+                  </div>
+
+                  <div>
+                    <strong>Paciente</strong>
+                    <span>Datos generales obligatorios</span>
+                  </div>
+                </div>
+
+                <div className={`wizard-step-item ${wizardStep === 1 ? 'active' : ''}`}>
+                  <div className="wizard-step-icon">
+                    <HomeOutlined />
+                  </div>
+
+                  <div>
+                    <strong>Domicilio</strong>
+                    <span>Información opcional simulada</span>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            <section className="pacientes-wizard-content">
+              <Form
+                form={form}
+                layout="vertical"
+                preserve={true}
+                onFinish={handleSubmit}
+                initialValues={{
+                  sexo: undefined,
+                  tipo_sangre: undefined,
+                  estado_civil: undefined,
+                  pais_nacimiento: 'Mexico',
+                }}
+              >
+                {wizardStep === 0 && (
+                  <div className="pacientes-wizard-step">
+                    <div className="pacientes-step-title">
+                      <span>1</span>
+                      <div>
+                        <strong>Información del paciente</strong>
+                        <p>Estos datos son necesarios para crear el expediente clínico.</p>
+                      </div>
+                    </div>
+
+                    <Row gutter={[16, 0]}>
+                      <Col xs={24}>
+                        <div className="pacientes-curp-switch">
+                          <div>
+                            <strong>Registro con CURP genérica</strong>
+                            <p>Actívalo si el paciente no cuenta con CURP.</p>
+                          </div>
+
+                          <Switch checked={usarCurpGenerica} onChange={handleToggleCurpGenerica} />
+                        </div>
+
+                        <Divider />
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="nombre"
+                          label="Nombre"
+                          rules={[{ required: true, message: 'Ingresa el nombre' }]}
+                        >
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="primer_apellido"
+                          label="Primer apellido"
+                          rules={[{ required: true, message: 'Ingresa el primer apellido' }]}
+                        >
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="segundo_apellido" label="Segundo apellido">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="fecha_nacimiento"
+                          label="Fecha de nacimiento"
+                          rules={[{ required: true, message: 'Ingresa la fecha de nacimiento' }]}
+                        >
+                          <Input type="date" max={new Date().toISOString().split('T')[0]} />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="sexo"
+                          label="Sexo"
+                          rules={[{ required: true, message: 'Selecciona el sexo' }]}
+                        >
+                          <Select
+                            options={[
+                              { value: 'F', label: 'Femenino' },
+                              { value: 'M', label: 'Masculino' },
+                            ]}
+                            allowClear
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="tipo_sangre"
+                          label="Tipo de sangre"
+                          rules={[{ required: true, message: 'Selecciona el tipo de sangre' }]}
+                        >
+                          <Select
+                            options={['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(
+                              (v) => ({ value: v, label: v }),
+                            )}
+                            allowClear
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={usarCurpGenerica ? 16 : 24}>
+                        <Form.Item
+                          name="curp"
+                          label={usarCurpGenerica ? 'CURP generada' : 'CURP'}
+                          rules={[
+                            { required: true, message: 'Ingresa la CURP' },
+                            { len: 18, message: 'La CURP debe tener 18 caracteres' },
+                          ]}
+                        >
+                          <Input maxLength={18} disabled={usarCurpGenerica} />
+                        </Form.Item>
+                      </Col>
+
+                      {usarCurpGenerica && (
+                        <Col xs={24} md={8}>
+                          <Form.Item label="Regenerar CURP genérica">
+                            <Button
+                              icon={<SyncOutlined />}
+                              onClick={handleRegenerarCurpGenerica}
+                              block
+                            >
+                              Generar otra
+                            </Button>
+                          </Form.Item>
+                        </Col>
+                      )}
+
+                      <Form.Item name="curp_generico" hidden>
+                        <Input />
+                      </Form.Item>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="lugar_origen" label="Lugar de origen">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="pais_nacimiento" label="País de nacimiento">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="estado_civil" label="Estado civil">
+                          <Select
+                            allowClear
+                            options={['Soltero', 'Casado', 'Divorciado', 'Viudo', 'Union libre'].map(
+                              (v) => ({ value: v, label: v }),
+                            )}
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="escolaridad" label="Escolaridad">
+                          <Select
+                            allowClear
+                            options={[
+                              'Primaria',
+                              'Secundaria',
+                              'Preparatoria',
+                              'Licenciatura',
+                              'Maestria',
+                              'Doctorado',
+                              'Otro',
+                            ].map((v) => ({ value: v, label: v }))}
+                          />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="ocupacion" label="Ocupación">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="numero_expediente"
+                          label="Número de expediente"
+                          rules={[{ required: true, message: 'Ingresa el número de expediente' }]}
+                        >
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="telefono" label="Teléfono">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="celular" label="Celular">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item
+                          name="correo"
+                          label="Correo"
+                          rules={[
+                            {
+                              type: 'email',
+                              message: 'Ingresa un correo válido',
+                            },
+                          ]}
+                        >
+                          <Input placeholder="correo@ejemplo.com" />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+                )}
+
+                {wizardStep === 1 && (
+                  <div className="pacientes-wizard-step">
+                    <div className="pacientes-step-title domicilio">
+                      <span>2</span>
+                      <div>
+                        <strong>Domicilio del paciente</strong>
+                        <p>Este paso es solo simulación por ahora. No se enviará al backend.</p>
+                      </div>
+                    </div>
+
+                    <Row gutter={[16, 0]}>
+                      <Col xs={24} md={14}>
+                        <Form.Item name="calle" label="Calle">
+                          <Input placeholder="Ej. Avenida Reforma" />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={12} md={5}>
+                        <Form.Item name="numero_exterior" label="No. exterior">
+                          <Input placeholder="123" />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={12} md={5}>
+                        <Form.Item name="numero_interior" label="No. interior">
+                          <Input placeholder="A" />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="colonia" label="Colonia">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="codigo_postal" label="Código postal">
+                          <Input maxLength={5} />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="municipio" label="Municipio">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={8}>
+                        <Form.Item name="estado_domicilio" label="Estado">
+                          <Input />
+                        </Form.Item>
+                      </Col>
+
+                      <Col xs={24} md={16}>
+                        <Form.Item name="referencias_domicilio" label="Referencias">
+                          <Input.TextArea
+                            rows={4}
+                            placeholder="Entre calles, color de casa, referencias..."
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  </div>
+                )}
+
+                <div className="pacientes-wizard-actions">
+                  <Button onClick={handleCloseWizard}>Cancelar</Button>
+
+                  {wizardStep === 1 && (
+                    <Button icon={<ArrowLeftOutlined />} onClick={goPrevWizardStep}>
+                      Anterior
+                    </Button>
+                  )}
+
+                  {wizardStep === 0 && (
+                    <Button
+                      type="primary"
+                      icon={<ArrowRightOutlined />}
+                      className="pacientes-primary-btn"
+                      onClick={goNextWizardStep}
+                    >
+                      Siguiente
+                    </Button>
+                  )}
+
+                  {wizardStep === 1 && (
+                    <>
+                      <Button loading={saving} onClick={submitWizard}>
+                        Omitir domicilio y registrar
+                      </Button>
+
+                      <Button
+                        type="primary"
+                        loading={saving}
+                        className="pacientes-primary-btn"
+                        onClick={submitWizard}
+                      >
+                        Registrar paciente
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </Form>
+            </section>
+          </div>
+        </div>
+      )}
+
+      <PacienteDetalleModal
+        open={detailOpen}
+        paciente={selectedPaciente}
+        onClose={() => setDetailOpen(false)}
+        onConsulta={(paciente) => {
+          setDetailOpen(false);
+          abrirConsultaPaciente(paciente);
+        }}
+      />
+
+      <PacienteAuditoriaModal
         open={auditOpen}
-        title="Auditoría del paciente"
-        onCancel={() => setAuditOpen(false)}
-        footer={[
-          <Button key="close" onClick={() => setAuditOpen(false)}>
-            Cerrar
-          </Button>,
-        ]}
-      >
-        {auditLoading ? (
-          <Spin />
-        ) : auditoria.length ? (
-          <pre className="paciente-audit-pre">{JSON.stringify(auditoria, null, 2)}</pre>
-        ) : (
-          <Empty description="Sin registros de auditoría" />
-        )}
-      </Modal>
+        loading={auditLoading}
+        auditoria={auditoria}
+        onClose={() => setAuditOpen(false)}
+      />
+
+      <PacienteEditModal
+        open={editModalOpen}
+        paciente={selectedPaciente}
+        loading={saving}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedPaciente(null);
+        }}
+        onSubmit={handleEditSubmit}
+      />
     </div>
   );
 };

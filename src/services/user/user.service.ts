@@ -10,11 +10,14 @@ export interface UserData {
   rol_id?: number;
   empresa_id?: number;
   sucursal_id?: number | null;
+  empresa_nombre?: string;
+  sucursal_nombre?: string;
   activo?: boolean;
   password?: string;
   cedula_profesional?: string;
   especialidad?: string;
 }
+
 
 export interface ChangePasswordData {
   newPassword: string;
@@ -49,8 +52,30 @@ class UserService {
       email: user?.correo || user?.email || '',
       telefono: user?.telefono || '',
       rol_id: Number(user?.rolId || user?.rol_id || 2),
-      empresa_id: user?.empresaId || user?.empresa_id,
-      sucursal_id: user?.sucursalId ?? user?.sucursal_id ?? null,
+
+      empresa_id: user?.empresaId || user?.empresa_id || user?.empresa?.id,
+      sucursal_id: user?.sucursalId ?? user?.sucursal_id ?? user?.sucursal?.id ?? null,
+
+      empresa_nombre:
+        user?.empresaNombre ||
+        user?.empresa_nombre ||
+        user?.nombreEmpresa ||
+        user?.nombre_empresa ||
+        user?.empresa?.nombre ||
+        user?.empresa?.nombreEmpresa ||
+        user?.empresa?.nombre_empresa ||
+        '',
+
+      sucursal_nombre:
+        user?.sucursalNombre ||
+        user?.sucursal_nombre ||
+        user?.nombreSucursal ||
+        user?.nombre_sucursal ||
+        user?.sucursal?.nombre ||
+        user?.sucursal?.nombreSucursal ||
+        user?.sucursal?.nombre_sucursal ||
+        '',
+
       activo: user?.activo === true || user?.activo === 1,
       cedula_profesional: user?.cedulaProfesional || user?.cedula_profesional || '',
       especialidad: user?.especialidad || '',
@@ -115,8 +140,7 @@ class UserService {
   async getMe(): Promise<UserData> {
     try {
       const response = await axiosInstance.get('/usuarios/me');
-
-      const user = response.data?.data;
+      const user = this.getResponseData(response.data);
 
       return this.normalizeUser(user);
     } catch (error) {
