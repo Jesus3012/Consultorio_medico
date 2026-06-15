@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layout,
   Menu,
@@ -28,10 +28,13 @@ import {
   TeamOutlined,
   ProfileOutlined,
   DownOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../../hooks/useAuth';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import MobileMenu from '../../components/MobileMenu/MobileMenu';
+import WelcomeModal from '../../components/Auth/WelcomeModal';
+import UserService from '../../services/user/user.service';
 import './PrivateLayout.css';
 
 const { Header, Sider, Content } = Layout;
@@ -40,22 +43,88 @@ const { Text } = Typography;
 const PrivateLayout: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { message, modal } = App.useApp();
 
-  const menuItems = [
+  useEffect(() => {
+    const loadUserFromApi = async () => {
+      try {
+        const me = await UserService.getMe();
+
+        setCurrentUser(me);
+        localStorage.setItem('user', JSON.stringify(me));
+
+        const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
+
+        if (!hasSeenWelcome) {
+          setWelcomeOpen(true);
+          sessionStorage.setItem('hasSeenWelcome', 'true');
+        }
+      } catch (error) {
+        const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
+
+        if (!hasSeenWelcome) {
+          setWelcomeOpen(true);
+          sessionStorage.setItem('hasSeenWelcome', 'true');
+        }
+      }
+    };
+
+    loadUserFromApi();
+  }, []);
+
+  const activeUser = currentUser || user;
+  const rolId = Number(activeUser?.rol_id || activeUser?.rolId || 0);
+
+  const menuAdmin = [
     { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
     { key: '/clinicas', icon: <ShopOutlined />, label: 'Consultorios' },
     { key: '/usuarios', icon: <TeamOutlined />, label: 'Usuarios' },
     { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
+    { key: '/confirmar-atencion', icon: <FileTextOutlined />, label: 'Registrar atención' },
     { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
     { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
     { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
     { key: '/configuracion', icon: <SettingOutlined />, label: 'Configuración' },
   ];
+
+  const menuMedico = [
+    { key: '/dashboard-medico', icon: <DashboardOutlined />, label: 'Dashboard' },
+    { key: '/confirmar-atencion', icon: <FileTextOutlined />, label: 'Procedimientos' },
+    { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
+    { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
+    { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
+    { key: '/configuracion', icon: <SettingOutlined />, label: 'Configuración' },
+  ];
+
+  const menuConsultor = [
+    { key: '/dashboard-consultor', icon: <EyeOutlined />, label: 'Dashboard' },
+    { key: '/pacientes', icon: <UserOutlined />, label: 'Pacientes' },
+    { key: '/confirmar-atencion', icon: <FileTextOutlined />, label: 'Registrar atención' },
+    { key: '/citas', icon: <CalendarOutlined />, label: 'Citas' },
+    { key: '/recetas', icon: <FileTextOutlined />, label: 'Recetas' },
+    { key: '/reportes', icon: <BarChartOutlined />, label: 'Reportes' },
+  ];
+
+  const getMenuItems = () => {
+    switch (rolId) {
+      case 1:
+        return menuAdmin;
+      case 2:
+        return menuMedico;
+      case 3:
+        return menuConsultor;
+      default:
+        return menuConsultor;
+    }
+  };
+
+  const menuItems = getMenuItems();
 
   const handleLogout = () => {
     try {
@@ -86,11 +155,13 @@ const PrivateLayout: React.FC = () => {
   };
 
   const getRolName = () => {
-    switch (user?.rol_id) {
+    switch (rolId) {
       case 1:
         return 'Administrador';
       case 2:
         return 'Médico';
+      case 3:
+        return 'Consultor';
       default:
         return 'Usuario';
     }
@@ -102,11 +173,15 @@ const PrivateLayout: React.FC = () => {
       icon: <ProfileOutlined />,
       label: 'Mi perfil',
     },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Configuración',
-    },
+    ...(rolId !== 3
+      ? [
+          {
+            key: 'settings',
+            icon: <SettingOutlined />,
+            label: 'Configuración',
+          },
+        ]
+      : []),
     {
       type: 'divider' as const,
     },
@@ -157,7 +232,7 @@ const PrivateLayout: React.FC = () => {
           selectedKeys={[location.pathname]}
           items={menuItems}
           className="custom-menu"
-          onClick={({ key }) => navigate(key)}
+          onClick={({ key }) => handleMenuClick(key)}
         />
       </Sider>
 
@@ -211,12 +286,10 @@ const PrivateLayout: React.FC = () => {
 
                 <div className="user-text-info">
                   <div className="user-name">
-                    {user?.nombre} {user?.primer_apellido || ''}
+                    {activeUser?.nombre || 'Usuario'} {activeUser?.primer_apellido || ''}
                   </div>
 
-                  <div className="user-role">
-                    {getRolName()}
-                  </div>
+                  <div className="user-role">{getRolName()}</div>
                 </div>
 
                 <DownOutlined className="user-dropdown-arrow" />
@@ -234,6 +307,12 @@ const PrivateLayout: React.FC = () => {
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
         onMenuClick={handleMenuClick}
+      />
+
+      <WelcomeModal
+        visible={welcomeOpen}
+        user={activeUser}
+        onClose={() => setWelcomeOpen(false)}
       />
     </Layout>
   );

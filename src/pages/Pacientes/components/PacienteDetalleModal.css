@@ -1,0 +1,197 @@
+.paciente-detail-modal .ant-modal-content {
+  overflow: hidden;
+  padding: 0;
+  border-radius: 28px;
+  background: #ffffff;
+}
+
+.paciente-detail-modal .ant-modal-body {
+  padding: 0;
+}
+
+.paciente-detail-modal .ant-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #edf3f5;
+  background: #ffffff;
+}
+
+.paciente-detail-modal .ant-modal-footer .ant-btn {
+  height: 40px;
+  border-radius: 12px;
+  font-weight: 850;
+}
+
+.paciente-detail-modal .ant-modal-footer .ant-btn-primary {
+  background: linear-gradient(135deg, #43d7d8, #31c4c8);
+  border-color: #43d7d8;
+  color: #063f40;
+  font-weight: 950;
+}
+
+.paciente-detail-modal .ant-modal-footer .ant-btn-primary:hover {
+  color: #ffffff !important;
+}
+
+.paciente-detail-hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 28px 30px;
+  background:
+    radial-gradient(circle at top right, rgba(67, 215, 216, 0.34), transparent 34%),
+    linear-gradient(135deg, #e8fbfb, #ffffff);
+  border-bottom: 1px solid #d7e4ec;
+}
+
+.paciente-detail-glow {
+  position: absolute;
+  right: -60px;
+  top: -80px;
+  width: 190px;
+  height: 190px;
+  border-radius: 999px;
+  background: rgba(67, 215, 216, 0.28);
+  filter: blur(5px);
+}
+
+.paciente-detail-avatar {
+  flex: 0 0 auto;
+  background: linear-gradient(135deg, #43d7d8, #b7f5f5);
+  color: #063f40;
+  font-size: 26px;
+  font-weight: 950;
+  box-shadow: 0 14px 28px rgba(67, 215, 216, 0.26);
+}
+
+.paciente-detail-header-info {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.paciente-detail-eyebrow {
+  color: #159fa3;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.paciente-detail-header-info h3 {
+  margin: 4px 0 6px;
+  color: #071733;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.paciente-detail-email {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #667085;
+}
+
+.paciente-detail-email svg {
+  color: #159fa3;
+}
+
+.paciente-detail-email .ant-typography {
+  color: #667085;
+  font-weight: 700;
+}
+
+.paciente-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.paciente-detail-tags .ant-tag {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 12px;
+  background: #ffffff;
+  color: #063f40;
+  font-weight: 900;
+}
+
+.paciente-detail-body {
+  padding: 22px 26px 26px;
+  background:
+    radial-gradient(circle at bottom left, rgba(67, 215, 216, 0.08), transparent 34%),
+    #ffffff;
+}
+
+.paciente-detail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.paciente-detail-section-title-space {
+  margin-top: 22px;
+}
+
+.paciente-detail-section-title svg {
+  color: #159fa3;
+  font-size: 20px;
+}
+
+.paciente-detail-section-title h3 {
+  margin: 0;
+  color: #071733;
+  font-size: 15px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.paciente-detail-descriptions {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.paciente-detail-descriptions .ant-descriptions-view {
+  border-radius: 18px;
+  overflow: hidden;
+  border-color: #d7e4ec;
+}
+
+.paciente-detail-descriptions .ant-descriptions-item-label {
+  width: 170px;
+  background: #f7fbfc !important;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.paciente-detail-descriptions .ant-descriptions-item-content {
+  color: #071733;
+  font-weight: 850;
+  background: #ffffff;
+}
+
+.paciente-inline-icon {
+  margin-right: 6px;
+  color: #159fa3;
+}
+
+@media (max-width: 768px) {
+  .paciente-detail-hero {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .paciente-detail-email,
+  .paciente-detail-tags {
+    justify-content: center;
+  }
+
+  .paciente-detail-descriptions .ant-descriptions-item {
+    padding-bottom: 0;
+  }
+}

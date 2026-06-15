@@ -1,0 +1,336 @@
+/* ==========================================
+   DASHBOARD MÉDICO
+========================================== */
+
+.doctor-dashboard {
+  padding: 0;
+}
+
+/* HEADER */
+
+.doctor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.doctor-title {
+  margin-bottom: 4px !important;
+  color: #1e293b;
+  font-weight: 700 !important;
+}
+
+.doctor-header-actions {
+  flex-shrink: 0;
+}
+
+.primary-medical-btn {
+  height: 40px;
+  background: linear-gradient(135deg, #5fd9da 0%, #45c5c6 100%) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  color: white !important;
+  font-weight: 700;
+  box-shadow: 0 6px 18px rgba(69, 197, 198, 0.18);
+  transition: all 0.25s ease;
+}
+
+.primary-medical-btn:hover {
+  transform: translateY(-2px);
+}
+
+.secondary-medical-btn {
+  height: 40px;
+  border-radius: 12px !important;
+  border-color: #dff4f4 !important;
+  color: #1a6b6c !important;
+  font-weight: 700;
+}
+
+.secondary-medical-btn:hover {
+  background: #f4fbfb !important;
+  border-color: #5fd9da !important;
+  color: #1a6b6c !important;
+}
+
+/* ==========================================
+   TARJETAS ESTADÍSTICAS
+========================================== */
+
+.doctor-stat-card {
+  border-radius: 18px !important;
+  border: 1px solid #edf7f7 !important;
+  box-shadow: 0 4px 16px rgba(15, 76, 77, 0.05);
+  transition: all 0.25s ease;
+  height: 170px;
+}
+
+.doctor-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(15, 76, 77, 0.08);
+}
+
+.doctor-stat-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+  gap: 12px;
+  padding: 20px !important;
+}
+
+.doctor-stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4fbfb;
+  color: #38b7b8;
+  font-size: 24px;
+}
+
+.doctor-stat-card .ant-typography {
+  margin: 0 !important;
+}
+
+.doctor-stat-card h2 {
+  margin: 0 !important;
+  color: #1e293b !important;
+  font-size: 32px !important;
+  line-height: 1;
+}
+
+.doctor-stat-card .ant-typography-secondary,
+.doctor-stat-card span {
+  color: #64748b;
+}
+
+/* ==========================================
+   FILAS Y ALTURAS IGUALES
+========================================== */
+
+.doctor-main-row {
+  margin-top: 18px;
+}
+
+.equal-row {
+  align-items: stretch;
+}
+
+.equal-row .ant-col {
+  display: flex;
+}
+
+.equal-card {
+  width: 100%;
+  height: 100%;
+}
+
+.equal-card .ant-card-body {
+  height: calc(100% - 57px);
+}
+
+/* ==========================================
+   CARDS GENERALES
+========================================== */
+
+.doctor-card {
+  border-radius: 20px !important;
+  border: 1px solid #edf7f7 !important;
+  box-shadow: 0 4px 16px rgba(15, 76, 77, 0.05);
+}
+
+.doctor-card .ant-card-head {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.doctor-card .ant-card-head-title {
+  color: #1e293b;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+/* ==========================================
+   TABLA
+========================================== */
+
+.doctor-card .ant-table-thead > tr > th {
+  background: #fafcfc !important;
+  color: #334155 !important;
+  font-weight: 700;
+}
+
+.doctor-card .ant-table-tbody > tr:hover > td {
+  background: rgba(95, 217, 218, 0.04) !important;
+}
+
+.agenda-hour {
+  white-space: nowrap;
+  color: #38b7b8;
+  font-weight: 600;
+}
+
+.patient-avatar {
+  background: linear-gradient(135deg, #5fd9da 0%, #45c5c6 100%);
+  color: white;
+}
+
+/* ==========================================
+   CONSULTAS SEMANA
+========================================== */
+
+.week-chart {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  height: 100%;
+}
+
+.week-item {
+  display: grid;
+  grid-template-columns: 50px 1fr 40px;
+  gap: 12px;
+  align-items: center;
+}
+
+.week-item span {
+  color: #334155;
+  font-weight: 600;
+}
+
+.week-item strong {
+  color: #38b7b8;
+  text-align: right;
+}
+
+.week-item .ant-progress-bg {
+  background: linear-gradient(90deg, #5fd9da 0%, #45c5c6 100%) !important;
+}
+
+/* ==========================================
+   PACIENTES RECIENTES
+========================================== */
+
+.recent-patients {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+}
+
+.recent-patient-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fbfefe;
+  border: 1px solid #edf7f7;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.recent-patient-item p {
+  margin: 2px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.recent-check {
+  color: #38b7b8;
+  font-size: 18px;
+}
+
+/* ==========================================
+   ACCIONES RÁPIDAS
+========================================== */
+
+.doctor-actions-card {
+  margin-top: 0;
+}
+
+.quick-actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-content: center;
+  height: 100%;
+}
+
+.quick-actions-grid .ant-btn {
+  height: 46px;
+  border-radius: 12px;
+  font-weight: 700;
+  border-color: #dff4f4;
+  color: #1a6b6c;
+}
+
+.quick-actions-grid .ant-btn:hover {
+  background: #f4fbfb !important;
+  border-color: #5fd9da !important;
+  color: #1a6b6c !important;
+}
+
+.quick-main-action {
+  background: #fbfefe;
+  border-color: #bfeeee !important;
+}
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 768px) {
+  .doctor-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .doctor-header-actions {
+    width: 100%;
+  }
+
+  .doctor-header-actions .ant-space-item,
+  .doctor-header-actions .ant-btn {
+    width: 100%;
+  }
+
+  .doctor-title {
+    font-size: 24px !important;
+  }
+
+  .doctor-stat-card {
+    height: 150px;
+  }
+
+  .doctor-stat-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+  }
+
+  .doctor-stat-card h2 {
+    font-size: 26px !important;
+  }
+
+  .doctor-card .ant-card-body {
+    padding: 14px;
+  }
+
+  .equal-card .ant-card-body {
+    height: auto;
+  }
+
+  .week-item {
+    grid-template-columns: 40px 1fr 35px;
+  }
+
+  .quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+}

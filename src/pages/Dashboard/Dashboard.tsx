@@ -40,7 +40,6 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import WelcomeModal from '../../components/Auth/WelcomeModal';
-import { detectGender } from '../../utils/genderDetector';
 import axiosInstance from '../../api/axios.config';
 import './Dashboard.css';
 
@@ -112,6 +111,7 @@ const Dashboard: React.FC = () => {
   });
 
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+  const [sucursalesOptions, setSucursalesOptions] = useState<Sucursal[]>([]);
   const [actividad, setActividad] = useState<Actividad[]>([]);
   const [metricas, setMetricas] = useState<Metricas>({
     ocupacion: 0,
@@ -131,18 +131,6 @@ const Dashboard: React.FC = () => {
       sessionStorage.setItem('hasSeenWelcome', 'true');
     }
   }, [user]);
-
-  const getWelcomeText = () => {
-    if (!user) return 'Bienvenido';
-
-    const nombreCompleto = `${user.nombre} ${user.primer_apellido || ''}`.trim();
-    const gender = user.genero || detectGender(user.nombre, user.primer_apellido);
-
-    if (gender === 'FEMALE') return `Bienvenida, ${nombreCompleto}`;
-    if (gender === 'MALE') return `Bienvenido, ${nombreCompleto}`;
-
-    return `Bienvenido(a), ${nombreCompleto}`;
-  };
 
   const fetchDashboard = async () => {
     setLoading(true);
@@ -178,6 +166,23 @@ const Dashboard: React.FC = () => {
         (item: any) => item.empresaId === empresaId
       );
 
+      const todasLasSucursales = sucursalesEmpresa.map((item: any) => ({
+        id: item.id,
+        nombre: item.nombre,
+        ubicacion: `${item.municipio || ''}, ${item.entidad || ''}`,
+        pacientes: 0,
+        consultas: 0,
+        medicos: usuariosData.filter(
+          (u: any) => u.empresaId === empresaId && u.sucursalId === item.id && u.rolId === 2
+        ).length,
+        usuarios: usuariosData.filter(
+          (u: any) => u.empresaId === empresaId && u.sucursalId === item.id
+        ).length,
+        estatus: item.activo ? 'ACTIVA' : 'INACTIVA',
+      }));
+
+      setSucursalesOptions(todasLasSucursales);
+
       if (sucursalId) {
         usuariosFiltrados = usuariosFiltrados.filter(
           (item: any) => item.sucursalId === sucursalId
@@ -191,7 +196,7 @@ const Dashboard: React.FC = () => {
       const sucursalesMapeadas = sucursalesFiltradas.map((item: any) => ({
         id: item.id,
         nombre: item.nombre,
-        ubicacion: `${item.municipio}, ${item.entidad}`,
+        ubicacion: `${item.municipio || ''}, ${item.entidad || ''}`,
         pacientes: 0,
         consultas: 0,
         medicos: usuariosFiltrados.filter(
@@ -403,9 +408,6 @@ const Dashboard: React.FC = () => {
       <div className="dashboard-modern">
         <div className="welcome-header">
           <div>
-            <Title level={isMobile ? 3 : 2} style={{ margin: 0 }}>
-              {getWelcomeText()}
-            </Title>
 
             <Text type="secondary" style={{ fontSize: isMobile ? 13 : 14 }}>
               Resumen general del consultorio médico
@@ -415,11 +417,13 @@ const Dashboard: React.FC = () => {
           <Space wrap>
             <Select
               allowClear
+              showSearch
               placeholder="Filtrar por consultorio"
               value={sucursalId}
-              onChange={setSucursalId}
+              onChange={(value) => setSucursalId(value)}
               style={{ width: isMobile ? '100%' : 230 }}
-              options={sucursales.map((sucursal) => ({
+              optionFilterProp="label"
+              options={sucursalesOptions.map((sucursal) => ({
                 label: sucursal.nombre,
                 value: sucursal.id,
               }))}
@@ -428,7 +432,7 @@ const Dashboard: React.FC = () => {
             <Button
               type="primary"
               icon={<PlusOutlined />}
-              onClick={() => navigate('/clinicas')}
+              onClick={() => navigate('/clinicas?nuevo=1')}
               className="add-clinic-btn"
               size={isMobile ? 'middle' : 'large'}
             >
@@ -438,39 +442,35 @@ const Dashboard: React.FC = () => {
         </div>
 
         <Spin spinning={loading}>
-          <Row gutter={[16, 16]} className="stats-row">
-            {globalStats.map((stat, index) => (
-              <Col xs={12} sm={12} md={8} lg={index === 4 ? 24 : 6} xl={index === 4 ? 4 : 5} key={stat.title}>
-                <Card className="stat-card-modern" hoverable>
-                  <div
-                    className="stat-icon"
-                    style={{
-                      background: `${stat.color}15`,
-                      color: stat.color,
-                    }}
-                  >
-                    {stat.icon}
-                  </div>
+          <div className="stats-grid">
+            {globalStats.map((stat) => (
+              <Card className="stat-card-modern" hoverable key={stat.title}>
+                <div
+                  className="stat-icon"
+                  style={{
+                    background: `${stat.color}15`,
+                    color: stat.color,
+                  }}
+                >
+                  {stat.icon}
+                </div>
 
-                  <div className="stat-content">
-                    <Text type="secondary" className="stat-title">
-                      {stat.title}
-                    </Text>
+                <div className="stat-content">
+                  <Text type="secondary" className="stat-title">
+                    {stat.title}
+                  </Text>
 
-                    <Title level={isMobile ? 4 : 3} className="stat-value">
-                      {Number(stat.value).toLocaleString('es-MX')}
-                    </Title>
+                  <Title level={3} className="stat-value">
+                    {Number(stat.value).toLocaleString('es-MX')}
+                  </Title>
 
-                    <div className="stat-trend">
-                      <Text style={{ fontSize: 11, color: '#2BA1A2', fontWeight: 600 }}>
-                        {stat.subtitle}
-                      </Text>
-                    </div>
-                  </div>
-                </Card>
-              </Col>
+                  <Text className="stat-trend">
+                    {stat.subtitle}
+                  </Text>
+                </div>
+              </Card>
             ))}
-          </Row>
+          </div>
 
           <Row gutter={[16, 16]} className="bottom-row">
             <Col xs={24} lg={12}>

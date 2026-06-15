@@ -1,3 +1,116 @@
+.usuarios-container {
+  padding: 24px;
+}
+
+.usuarios-card {
+  border-radius: 18px;
+}
+
+.card-title-icon {
+  color: #50EBEC;
+  font-size: 20px;
+}
+
+.card-title-text {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.usuarios-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.usuarios-toolbar .ant-input-affix-wrapper {
+  width: 300px;
+  height: 40px;
+  border-radius: 10px;
+}
+
+.usuarios-toolbar .ant-btn {
+  height: 40px;
+  border-radius: 10px;
+}
+
+.user-avatar {
+  background: #50EBEC;
+}
+
+.user-avatar.mobile {
+  width: 44px;
+  height: 44px;
+  line-height: 44px;
+}
+
+/* Tabla */
+
+.usuarios-card .ant-table-wrapper {
+  overflow-x: hidden !important;
+}
+
+.usuarios-card .ant-table {
+  width: 100%;
+  table-layout: auto;
+}
+
+.usuarios-card .ant-table-content {
+  overflow-x: hidden !important;
+}
+
+.usuarios-card .ant-table-thead > tr > th {
+  white-space: nowrap;
+  text-align: center;
+}
+
+.usuarios-card .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+.usuarios-card .ant-table-cell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal !important;
+  overflow-wrap: normal !important;
+}
+
+.telefono-nowrap {
+  white-space: nowrap;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.rol-tag {
+  min-width: 90px;
+  text-align: center;
+  display: inline-flex;
+  justify-content: center;
+  margin: 0;
+}
+
+.usuarios-card .ant-table-thead > tr > th {
+  white-space: nowrap;
+}
+
+.usuarios-card .ant-table-tbody > tr > td {
+  vertical-align: middle;
+}
+
+/* Radio roles centrado */
+.roles-radio-group {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.roles-radio-group .ant-radio-button-wrapper {
+  flex: 1;
+  text-align: center;
+  border-radius: 10px !important;
+}
+
 /* Modal elegante para PC */
 .elegant-detail-modal .ant-modal-content {
   border-radius: 24px;
@@ -8,6 +121,69 @@
 .elegant-detail-modal .ant-modal-close {
   top: 20px;
   right: 20px;
+}
+
+.user-detail-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.user-detail-avatar {
+  background: #50EBEC;
+  box-shadow: 0 4px 12px rgba(80, 235, 236, 0.3);
+}
+
+.user-detail-header h2 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.user-role-tag {
+  font-size: 13px;
+  padding: 4px 12px;
+}
+
+.user-detail-card {
+  background: #f8fafc;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.user-detail-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.user-detail-row:last-child {
+  margin-bottom: 0;
+}
+
+.user-detail-row .anticon {
+  color: #50EBEC;
+  font-size: 18px;
+  width: 32px;
+}
+
+.detail-label {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-detail-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.user-detail-actions .ant-btn {
+  border-radius: 10px;
+  height: 44px;
 }
 
 /* Drawer para móvil */
@@ -22,4 +198,94 @@
 
 .mobile-details-drawer .ant-drawer-body {
   padding: 20px;
+}
+
+/* Móvil */
+.users-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-mobile-card {
+  border-radius: 14px;
+  cursor: pointer;
+  border: 1px solid #f0f0f0;
+}
+
+.user-mobile-card .ant-card-body {
+  padding: 16px;
+}
+
+.user-mobile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.mobile-user-name {
+  font-weight: 600;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.mobile-user-info {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.mobile-user-info .anticon {
+  margin-right: 6px;
+  font-size: 11px;
+}
+
+.mobile-user-tags {
+  margin-top: 10px;
+}
+
+.empty-users {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+@media (max-width: 768px) {
+  .usuarios-container {
+    padding: 12px;
+  }
+
+  .usuarios-card .ant-card-body {
+    padding: 16px;
+  }
+
+  .card-title-text {
+    font-size: 16px;
+  }
+
+  .usuarios-toolbar {
+    flex-direction: column;
+  }
+
+  .usuarios-toolbar .ant-input-affix-wrapper {
+    width: 100%;
+    height: 42px;
+  }
+
+  .usuarios-toolbar .ant-btn {
+    width: 100%;
+    height: 42px;
+  }
+
+  .user-detail-actions {
+    flex-direction: column;
+  }
+
+  .roles-radio-group {
+    flex-direction: column;
+  }
+
+  .roles-radio-group .ant-radio-button-wrapper {
+    width: 100%;
+  }
 }

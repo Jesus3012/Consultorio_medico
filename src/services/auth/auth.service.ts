@@ -1,19 +1,17 @@
-// src/services/auth/auth.service.ts
 import axios from 'axios';
 import type { LoginResponse, User } from '../../types/auth/auth.types';
 import axiosInstance from '../../api/axios.config';
 import { detectGender } from '../../utils/genderDetector';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://api-medica.rexcoresolutions.com/api/v1';
+const API_URL =
+  import.meta.env.VITE_API_URL ||
+  'https://api-medica.rexcoresolutions.com/api/v1';
 
-// Función para decodificar el token JWT
 const decodeToken = (token: string): any => {
   try {
     const payload = token.split('.')[1];
-    const decoded = atob(payload);
-    return JSON.parse(decoded);
-  } catch (error) {
-    console.error('Error decoding token:', error);
+    return JSON.parse(atob(payload));
+  } catch {
     return null;
   }
 };
@@ -26,114 +24,318 @@ class AuthService {
     if (!AuthService.instance) {
       AuthService.instance = new AuthService();
     }
+
     return AuthService.instance;
+  }
+
+  private extractUserData(rawData: any): any {
+    if (!rawData) return {};
+
+    if (rawData?.data?.user) return rawData.data.user;
+    if (rawData?.data?.usuario) return rawData.data.usuario;
+    if (rawData?.data?.data) return rawData.data.data;
+    if (rawData?.data?.id || rawData?.data?.correo || rawData?.data?.email) {
+      return rawData.data;
+    }
+
+    if (rawData?.user) return rawData.user;
+    if (rawData?.usuario) return rawData.usuario;
+
+    return rawData;
+  }
+
+  private normalizeUser(userData: any, tokenData?: any): User {
+    const cleanUserData = this.extractUserData(userData);
+
+    const nombre =
+      cleanUserData?.nombre ||
+      cleanUserData?.name ||
+      cleanUserData?.firstName ||
+      '';
+
+    const primerApellido =
+      cleanUserData?.primerApellido ||
+      cleanUserData?.primer_apellido ||
+      cleanUserData?.apellidoPaterno ||
+      cleanUserData?.lastName ||
+      '';
+
+    const segundoApellido =
+      cleanUserData?.segundoApellido ||
+      cleanUserData?.segundo_apellido ||
+      cleanUserData?.apellidoMaterno ||
+      '';
+
+    const email =
+      cleanUserData?.correo ||
+      cleanUserData?.email ||
+      tokenData?.correo ||
+      tokenData?.email ||
+      '';
+
+    const rolId =
+      cleanUserData?.rolId ||
+      cleanUserData?.rol_id ||
+      tokenData?.rolId ||
+      tokenData?.rol_id ||
+      1;
+
+    const empresaId =
+      cleanUserData?.empresaId ||
+      cleanUserData?.empresa_id ||
+      tokenData?.empresaId ||
+      tokenData?.empresa_id ||
+      null;
+
+    const sucursalId =
+      cleanUserData?.sucursalId ??
+      cleanUserData?.sucursal_id ??
+      tokenData?.sucursalId ??
+      tokenData?.sucursal_id ??
+      null;
+
+    const gender = detectGender(nombre, primerApellido);
+
+    return {
+      id:
+        cleanUserData?.id ||
+        cleanUserData?.userId ||
+        cleanUserData?.usuarioId ||
+        cleanUserData?.usuario_id ||
+        tokenData?.userId ||
+        tokenData?.sub ||
+        tokenData?.id,
+
+      nombre,
+      primer_apellido: primerApellido,
+      segundo_apellido: segundoApellido,
+
+      email,
+      telefono: cleanUserData?.telefono || '',
+
+      rol_id: Number(rolId),
+      empresa_id: empresaId,
+      sucursal_id: sucursalId,
+
+      cedula_profesional:
+        cleanUserData?.cedulaProfesional ||
+        cleanUserData?.cedula_profesional ||
+        '',
+
+      especialidad: cleanUserData?.especialidad || '',
+
+      activo:
+        cleanUserData?.activo === undefined
+          ? true
+          : cleanUserData?.activo === true || cleanUserData?.activo === 1,
+
+      ultimo_acceso:
+        cleanUserData?.ultimoAcceso ||
+        cleanUserData?.ultimo_acceso ||
+        undefined,
+
+      created_at:
+        cleanUserData?.createdAt ||
+        cleanUserData?.created_at,
+
+      updated_at:
+        cleanUserData?.updatedAt ||
+        cleanUserData?.updated_at,
+
+      genero: gender,
+    };
+  }
+
+  private hasValidName(user: User | null): boolean {
+    return !!user?.nombre && user.nombre.trim() !== '';
   }
 
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
         email,
-        password
+        password,
       });
-      
-      if (response.data?.success && response.data?.data) {
-        const accessToken = response.data.data.accessToken;
-        
-        if (accessToken) {
-          localStorage.setItem('access_token', accessToken);
-          axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-          
-          // Decodificar el token para obtener el userId
-          const decodedToken = decodeToken(accessToken);
-          
-          const userId = decodedToken?.userId || decodedToken?.sub || decodedToken?.id;
-          
-          if (userId) {
-            // Obtener datos completos del usuario por ID
-            const completeUser = await this.getUserById(userId, accessToken);
-            
-            if (completeUser && completeUser.id) {
-              localStorage.setItem('user', JSON.stringify(completeUser));
-              this.startRefreshTokenTimer();
-              
-              return {
-                success: true,
-                data: {
-                  user: completeUser,
-                  token: accessToken,
-                  refreshToken: undefined
-                }
-              };
-            }
-          }
-          
-          throw new Error('No se pudo obtener la información del usuario');
-        }
+
+      if (!response.data?.success || !response.data?.data) {
+        throw new Error('No se encontraron datos de usuario en la respuesta');
       }
-      
-      throw new Error('No se encontraron datos de usuario en la respuesta');
-      
+
+      const accessToken =
+        response.data.data.accessToken ||
+        response.data.data.token ||
+        response.data.accessToken ||
+        response.data.token;
+
+      if (!accessToken) {
+        throw new Error('No se recibió token de acceso');
+      }
+
+      localStorage.setItem('access_token', accessToken);
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+
+      const decodedToken = decodeToken(accessToken);
+
+      const loginUserRaw =
+        response.data.data.user ||
+        response.data.data.usuario ||
+        response.data.data;
+
+      const loginUserNormalized = this.normalizeUser(loginUserRaw, decodedToken);
+
+      let meUserNormalized: User | null = null;
+
+      try {
+        meUserNormalized = await this.getMe(accessToken, decodedToken);
+      } catch {
+        meUserNormalized = null;
+      }
+
+      const userId =
+        decodedToken?.userId ||
+        decodedToken?.sub ||
+        decodedToken?.id ||
+        loginUserNormalized?.id ||
+        meUserNormalized?.id;
+
+      let usuarioById: User | null = null;
+
+      if (userId) {
+        usuarioById = await this.getUsuarioById(
+          accessToken,
+          Number(userId),
+          decodedToken
+        );
+      }
+
+      let completeUser: User;
+
+      if (this.hasValidName(usuarioById)) {
+        completeUser = usuarioById as User;
+      } else if (this.hasValidName(meUserNormalized)) {
+        completeUser = meUserNormalized as User;
+      } else if (this.hasValidName(loginUserNormalized)) {
+        completeUser = loginUserNormalized;
+      } else {
+        completeUser = {
+          ...loginUserNormalized,
+          ...meUserNormalized,
+          ...usuarioById,
+
+          id:
+            usuarioById?.id ||
+            meUserNormalized?.id ||
+            loginUserNormalized?.id ||
+            decodedToken?.userId,
+
+          nombre:
+            usuarioById?.nombre ||
+            meUserNormalized?.nombre ||
+            loginUserNormalized?.nombre ||
+            '',
+
+          primer_apellido:
+            usuarioById?.primer_apellido ||
+            meUserNormalized?.primer_apellido ||
+            loginUserNormalized?.primer_apellido ||
+            '',
+
+          segundo_apellido:
+            usuarioById?.segundo_apellido ||
+            meUserNormalized?.segundo_apellido ||
+            loginUserNormalized?.segundo_apellido ||
+            '',
+
+          email:
+            usuarioById?.email ||
+            meUserNormalized?.email ||
+            loginUserNormalized?.email ||
+            decodedToken?.email ||
+            email,
+
+          rol_id: Number(
+            usuarioById?.rol_id ||
+              meUserNormalized?.rol_id ||
+              loginUserNormalized?.rol_id ||
+              decodedToken?.rolId ||
+              1
+          ),
+        };
+      }
+
+      const allowedRoles = [1, 2, 3];
+
+      if (!allowedRoles.includes(Number(completeUser.rol_id))) {
+        this.logout();
+        throw new Error('Rol no autorizado para iniciar sesión');
+      }
+
+      localStorage.setItem('user', JSON.stringify(completeUser));
+
+      this.startRefreshTokenTimer();
+
+      return {
+        success: true,
+        data: {
+          user: completeUser,
+          token: accessToken,
+          refreshToken: undefined,
+        },
+      };
     } catch (error: any) {
-      console.error('❌ Login error:', error);
-      
       if (error.response) {
         throw {
           response: {
+            status: error.response.status,
             data: {
-              message: error.response.data?.message || 'Credenciales incorrectas'
-            }
-          }
+              message:
+                error.response.data?.message ||
+                'Credenciales incorrectas',
+            },
+          },
         };
       }
-      
+
       throw error;
     }
   }
 
-  // Obtener usuario por ID usando GET /api/v1/usuarios/{id}
-  private async getUserById(userId: number, token: string): Promise<User | null> {
+  private async getMe(token: string, tokenData?: any): Promise<User | null> {
+    try {
+      const response = await axios.get(`${API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const userData = this.extractUserData(response.data);
+
+      if (!userData) return null;
+
+      return this.normalizeUser(userData, tokenData);
+    } catch {
+      return null;
+    }
+  }
+
+  private async getUsuarioById(
+    token: string,
+    userId: number,
+    tokenData?: any
+  ): Promise<User | null> {
     try {
       const response = await axios.get(`${API_URL}/usuarios/${userId}`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
-      // La API devuelve: { success, statusCode, message, data: { ... } }
-      const userData = response.data?.data;
-      
-      if (userData) {
-        
-        // Mapear los campos de la API a nuestros campos
-        // API usa: primerApellido, segundoApellido, correo, cedulaProfesional
-        // Nosotros usamos: primer_apellido, segundo_apellido, email, cedula_profesional
-        const gender = detectGender(userData.nombre, userData.primerApellido);
-        
-        return {
-          id: userData.id,
-          nombre: userData.nombre || '',
-          primer_apellido: userData.primerApellido || '',
-          segundo_apellido: userData.segundoApellido || '',
-          email: userData.correo || '',
-          telefono: userData.telefono || '',
-          rol_id: userData.rolId || 1,
-          empresa_id: userData.empresaId || 1,
-          sucursal_id: userData.sucursalId || null,
-          cedula_profesional: userData.cedulaProfesional || '',
-          especialidad: userData.especialidad || '',
-          activo: userData.activo === true,
-          ultimo_acceso: userData.ultimoAcceso || undefined,
-          created_at: userData.createdAt,
-          updated_at: userData.updatedAt,
-          genero: gender
-        };
-      }
-      
-      console.warn('⚠️ No se encontraron datos de usuario en la respuesta');
-      return null;
-      
-    } catch (error) {
-      console.error(`Error obteniendo usuario ${userId}:`, error);
+
+      const userData = this.extractUserData(response.data);
+
+      if (!userData) return null;
+
+      return this.normalizeUser(userData, tokenData);
+    } catch {
       return null;
     }
   }
@@ -142,8 +344,10 @@ class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user');
+
     this.stopRefreshTokenTimer();
-    delete axiosInstance.defaults.headers.common['Authorization'];
+
+    delete axiosInstance.defaults.headers.common.Authorization;
   }
 
   getToken(): string | null {
@@ -156,36 +360,40 @@ class AuthService {
 
   getUser(): User | null {
     const userStr = localStorage.getItem('user');
-    if (userStr) {
-      try {
-        return JSON.parse(userStr) as User;
-      } catch {
-        console.error('Error parsing user from localStorage');
-        return null;
-      }
+
+    if (!userStr) return null;
+
+    try {
+      return JSON.parse(userStr) as User;
+    } catch {
+      return null;
     }
-    return null;
   }
 
   async refreshToken(): Promise<string | null> {
     const refreshToken = this.getRefreshToken();
+
     if (!refreshToken) return null;
 
     try {
       const response = await axios.post(`${API_URL}/auth/refresh`, {
-        refresh_token: refreshToken
+        refresh_token: refreshToken,
       });
-      
-      const newToken = response.data.token || response.data.data?.accessToken;
-      if (newToken) {
-        localStorage.setItem('access_token', newToken);
-        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-        this.startRefreshTokenTimer();
-        return newToken;
-      }
-      return null;
-    } catch (error) {
-      console.error('Refresh token error:', error);
+
+      const newToken =
+        response.data.token ||
+        response.data.data?.accessToken ||
+        response.data.data?.token;
+
+      if (!newToken) return null;
+
+      localStorage.setItem('access_token', newToken);
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${newToken}`;
+
+      this.startRefreshTokenTimer();
+
+      return newToken;
+    } catch {
       this.logout();
       return null;
     }
@@ -193,6 +401,7 @@ class AuthService {
 
   private startRefreshTokenTimer(): void {
     this.stopRefreshTokenTimer();
+
     this.refreshTokenTimeout = window.setTimeout(() => {
       this.refreshToken();
     }, 50 * 60 * 1000);

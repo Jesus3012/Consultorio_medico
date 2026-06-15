@@ -1,0 +1,1152 @@
+:root {
+  --rx-primary: #0f766e;
+  --rx-primary-2: #14b8a6;
+  --rx-primary-3: #2dd4bf;
+  --rx-dark: #042f2e;
+  --rx-text: #101b33;
+  --rx-muted: #64748b;
+  --rx-line: #d7ecef;
+  --rx-card: #ffffff;
+  --rx-soft: #ecfeff;
+  --rx-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+  --rx-radius: 24px;
+}
+
+.receta-page {
+  width: 100%;
+  min-height: calc(100vh - 70px);
+  padding: clamp(12px, 2vw, 24px);
+  background:
+    radial-gradient(circle at 8% 8%, rgba(45, 212, 191, 0.22), transparent 28%),
+    radial-gradient(circle at 90% 0%, rgba(20, 184, 166, 0.16), transparent 26%),
+    linear-gradient(135deg, #f8ffff 0%, #effafa 50%, #f7fbfd 100%);
+  color: var(--rx-text);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.rx-main {
+  width: min(100%, 1480px);
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--rx-line);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: var(--rx-shadow);
+}
+
+.rx-hero {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(16px, 2vw, 24px);
+  background:
+    radial-gradient(circle at 84% 4%, rgba(255, 255, 255, 0.22), transparent 28%),
+    linear-gradient(135deg, #0b5f5a 0%, #0f766e 52%, #2dd4bf 100%);
+}
+
+.rx-hero::after {
+  content: '';
+  position: absolute;
+  right: 9%;
+  top: -110px;
+  width: 280px;
+  height: 280px;
+  border: 38px solid rgba(255, 255, 255, 0.13);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.rx-hero__top {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(240px, 1fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.rx-back-btn {
+  height: 48px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #075f58;
+  font-weight: 950;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+}
+
+.rx-title-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.rx-title-block h2.ant-typography {
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(26px, 3vw, 42px);
+  line-height: 1;
+  font-weight: 950;
+  letter-spacing: -1px;
+  text-transform: uppercase;
+}
+
+.rx-hero__icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.17);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+  font-size: 30px;
+}
+
+.rx-date-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 280px;
+  padding: 15px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+}
+
+.rx-date-card svg {
+  color: var(--rx-primary);
+  font-size: 24px;
+}
+
+.rx-date-card span,
+.rx-patient-main span,
+.rx-patient-info span,
+.rx-status-card span {
+  display: block;
+  color: var(--rx-muted);
+  font-size: 11px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.35px;
+}
+
+.rx-date-card strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--rx-text);
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.rx-patient-panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(340px, 1.08fr) minmax(450px, 1.62fr) minmax(190px, 0.55fr);
+  gap: 14px;
+  align-items: stretch;
+  padding: 14px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+.rx-patient-main,
+.rx-patient-info > div,
+.rx-status-card {
+  border: 1px solid #d8eef1;
+  background: linear-gradient(135deg, #ffffff, #f8ffff);
+  border-radius: 20px;
+}
+
+.rx-patient-main {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 12px 16px;
+}
+
+.rx-avatar-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 86px;
+  height: 86px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(153, 246, 228, 0.42), rgba(103, 232, 249, 0.25));
+}
+
+.rx-avatar.ant-avatar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  border: 4px solid #ffffff;
+  background: linear-gradient(135deg, #99f6e4, #67e8f9);
+  color: #075f58;
+  font-size: 14px !important;
+  font-weight: 950;
+  box-shadow: 0 12px 24px rgba(20, 184, 166, 0.26);
+}
+
+.rx-avatar.ant-avatar > span {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100%;
+  height: 100%;
+  color: #075f58 !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  line-height: 1 !important;
+  transform: none !important;
+}
+
+.rx-patient-name {
+  min-width: 0;
+}
+
+.rx-patient-main strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--rx-text);
+  font-size: 16px;
+  font-weight: 950;
+  text-transform: uppercase;
+  line-height: 1.2;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rx-patient-main small {
+  display: block;
+  margin-top: 4px;
+  color: var(--rx-muted);
+  font-weight: 850;
+}
+
+.rx-patient-info {
+  display: grid;
+  grid-template-columns: 0.6fr 0.45fr 1.4fr 1fr;
+  gap: 10px;
+  min-width: 0;
+}
+
+.rx-patient-info > div {
+  min-width: 0;
+  padding: 14px;
+}
+
+.rx-patient-info strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--rx-text);
+  font-size: 14px;
+  font-weight: 950;
+  line-height: 1.25;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.rx-status-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.rx-status-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--rx-text);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.rx-progress-ring {
+  --rx-progress: 0%;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  border-radius: 50%;
+  background: conic-gradient(var(--rx-primary-3) var(--rx-progress), #e5eef2 0);
+  position: relative;
+}
+
+.rx-progress-ring::after {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.rx-progress-ring span {
+  position: relative;
+  z-index: 1;
+  color: #075f58;
+  font-size: 17px;
+  font-weight: 950;
+}
+
+.rx-content-grid {
+  display: grid;
+  grid-template-columns: minmax(390px, 0.75fr) minmax(600px, 1.25fr);
+  gap: 18px;
+  align-items: start;
+  padding: 18px;
+}
+
+.rx-card {
+  min-width: 0;
+  padding: clamp(18px, 1.7vw, 24px);
+  border: 1px solid var(--rx-line);
+  border-radius: var(--rx-radius);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.055);
+}
+
+.rx-card--clinical {
+  background:
+    radial-gradient(circle at top left, rgba(45, 212, 191, 0.1), transparent 35%),
+    rgba(255, 255, 255, 0.95);
+}
+
+.rx-card-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #edf4f5;
+}
+
+.rx-card-title > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.rx-card-title svg {
+  color: var(--rx-primary);
+  font-size: 25px;
+}
+
+.rx-card-title h3 {
+  margin: 0;
+  color: var(--rx-text);
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 950;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.rx-card-title span {
+  color: var(--rx-muted);
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.rx-card .ant-form-item {
+  margin-bottom: 14px;
+}
+
+.rx-card .ant-form-item-label {
+  padding-bottom: 6px;
+}
+
+.rx-card .ant-form-item-label > label {
+  color: #344156;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.rx-card .ant-input,
+.rx-card .ant-select-selector,
+.rx-card .ant-picker,
+.rx-card textarea,
+.rx-card .ant-input-affix-wrapper,
+.rx-card .ant-input-number,
+.rx-card .ant-input-number-input {
+  min-height: 44px;
+  border-radius: 15px !important;
+}
+
+.rx-card .ant-input,
+.rx-card .ant-select-selector,
+.rx-card .ant-picker,
+.rx-card textarea,
+.rx-card .ant-input-affix-wrapper,
+.rx-card .ant-input-number {
+  border-color: #d8e9ed !important;
+  background: #fbfdff !important;
+}
+
+.rx-card textarea.ant-input {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  line-height: 1.45;
+  resize: none;
+}
+
+.rx-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 16px;
+  padding-top: 4px;
+}
+
+.rx-vitals-grid .ant-form-item {
+  margin-bottom: 0;
+}
+
+.rx-builder {
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(20, 184, 166, 0.26);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(45, 212, 191, 0.16), transparent 36%),
+    linear-gradient(135deg, #f2ffff, #ffffff);
+}
+
+.rx-builder-grid {
+  display: grid;
+  grid-template-columns: 2fr 0.9fr 1fr 0.9fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.rx-builder-grid .ant-form-item {
+  margin-bottom: 0;
+}
+
+.rx-field-medicine {
+  grid-column: span 2;
+}
+
+.rx-field-notes {
+  grid-column: span 4;
+}
+
+.rx-number {
+  width: 100%;
+}
+
+.rx-primary-btn,
+.rx-add-treatment-btn {
+  height: 44px;
+  border: none !important;
+  border-radius: 15px;
+  color: #073b3a !important;
+  font-weight: 950;
+  background: linear-gradient(135deg, #5eead4, #2dd4bf) !important;
+  box-shadow: 0 12px 22px rgba(45, 212, 191, 0.28);
+}
+
+.rx-primary-btn:hover,
+.rx-add-treatment-btn:hover {
+  color: #ffffff !important;
+  filter: brightness(0.98);
+  transform: translateY(-1px);
+}
+
+.rx-add-treatment-btn {
+  width: 100%;
+}
+
+.rx-treatment-table {
+  overflow: hidden;
+  border: 1px solid var(--rx-line);
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.rx-treatment-table .ant-table-thead > tr > th {
+  background: #0f766e !important;
+  color: #ffffff !important;
+  border-bottom: none !important;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.rx-treatment-table .ant-table-tbody > tr > td {
+  border-color: #edf4f5 !important;
+  vertical-align: middle;
+}
+
+.rx-table-index {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 11px;
+  background: #ccfbf1;
+  color: #075f58;
+  font-weight: 950;
+}
+
+.rx-med-info {
+  display: grid;
+  gap: 3px;
+}
+
+.rx-med-info strong {
+  color: var(--rx-text);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.rx-med-info span {
+  color: #075f58;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.rx-med-info small {
+  color: var(--rx-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.rx-treatment-cards {
+  display: none;
+}
+
+.rx-empty-box {
+  padding: 20px;
+  border: 1px dashed #bde9e8;
+  border-radius: 20px;
+  background: #fbffff;
+}
+
+.rx-treatment-card {
+  padding: 16px;
+  border: 1px solid var(--rx-line);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #fbffff 100%);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.045);
+}
+
+.rx-treatment-card__top {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.rx-treatment-card__number {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+  background: #ccfbf1;
+  color: #075f58;
+  font-weight: 950;
+}
+
+.rx-treatment-card__main strong {
+  display: block;
+  color: var(--rx-text);
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.rx-treatment-card__main span {
+  display: block;
+  margin-top: 4px;
+  color: #075f58;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.rx-treatment-card__meta {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #edf4f5;
+}
+
+.rx-treatment-card__meta p {
+  margin: 8px 0 0;
+  color: var(--rx-muted);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.rx-via-tag {
+  max-width: 100%;
+  margin: 0;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 999px;
+  background: #ccfbf1;
+  color: #075f58;
+  font-size: 11px;
+  font-weight: 950;
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.rx-follow-card {
+  margin: 0 18px 18px;
+}
+
+.rx-check-panel {
+  padding: 14px;
+  border-radius: 18px;
+  background: #f8ffff;
+  border: 1px solid #e0f2f3;
+}
+
+.rx-full {
+  width: 100%;
+}
+
+.rx-actions {
+  position: sticky;
+  bottom: 14px;
+  z-index: 8;
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 18px 18px;
+  padding: 12px;
+  border: 1px solid var(--rx-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.rx-actions .ant-btn {
+  height: 42px;
+  border-radius: 13px;
+  font-weight: 900;
+}
+
+.rx-preview-modal .ant-modal-content {
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.rx-preview-modal .ant-modal-body {
+  background: #f8fbfd;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+.rx-preview-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--rx-text);
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.rx-preview-title svg {
+  color: var(--rx-primary);
+}
+
+.rx-print-only {
+  display: none;
+}
+
+.rx-print-template {
+  position: relative;
+  width: 100%;
+  max-width: 1120px;
+  min-height: 740px;
+  margin: 0 auto;
+  padding: 26px 30px;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 18px;
+  border: 1px solid #d7ecef;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.rx-print-watermark {
+  position: absolute;
+  top: 52%;
+  left: 56%;
+  transform: translate(-50%, -50%) rotate(-22deg);
+  font-size: 100px;
+  font-weight: 950;
+  color: rgba(15, 118, 110, 0.04);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.rx-template-header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  padding-bottom: 12px;
+  border-bottom: 4px solid #0f766e;
+}
+
+.rx-template-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rx-template-logo {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0f766e, #2dd4bf);
+  color: #ffffff;
+  font-size: 25px;
+}
+
+.rx-template-brand h1 {
+  margin: 0;
+  color: #0f766e;
+  font-size: 27px;
+  font-weight: 950;
+}
+
+.rx-template-brand p {
+  margin: 2px 0 0;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.rx-template-date {
+  text-align: right;
+}
+
+.rx-template-date span,
+.rx-template-doctor span,
+.rx-template-section span,
+.rx-template-follow span,
+.rx-template-mini-grid span {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rx-template-date strong {
+  display: block;
+  margin-top: 4px;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.rx-print-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 285px 1fr;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.rx-print-sidebar {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.rx-print-body {
+  min-width: 0;
+}
+
+.rx-template-doctor,
+.rx-template-box,
+.rx-template-mini-grid > div,
+.rx-template-follow > div {
+  padding: 9px 10px;
+  border: 1px solid #d7ecef;
+  border-radius: 11px;
+  background: #fbffff;
+}
+
+.rx-template-doctor {
+  background: #f0fdfa;
+  border-color: #bde9e8;
+}
+
+.rx-template-doctor strong {
+  display: block;
+  margin-top: 3px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.rx-template-doctor small {
+  display: block;
+  margin-top: 1px;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rx-template-section {
+  position: relative;
+  z-index: 1;
+  margin-top: 10px;
+}
+
+.rx-print-sidebar .rx-template-section {
+  margin-top: 0;
+}
+
+.rx-template-section h2 {
+  margin: 0 0 7px;
+  color: #0f766e;
+  font-size: 13px;
+  font-weight: 950;
+  text-transform: uppercase;
+  border-bottom: 1px solid #d7ecef;
+  padding-bottom: 6px;
+}
+
+.rx-template-box p {
+  margin: 4px 0 0;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.rx-template-box--diagnostic {
+  min-height: 52px;
+}
+
+.rx-template-box--diagnostic p {
+  font-size: 13px;
+}
+
+.rx-template-mini-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.rx-template-mini-grid > div:first-child {
+  grid-column: 1 / -1;
+}
+
+.rx-template-mini-grid strong,
+.rx-template-follow strong {
+  display: block;
+  margin-top: 3px;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.rx-template-rx {
+  min-height: 230px;
+}
+
+.rx-template-treatment-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.rx-template-treatment-list li {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 10px;
+  padding-bottom: 7px;
+  border-bottom: 1px dashed #cbd5e1;
+}
+
+.rx-template-treatment-list strong {
+  display: block;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.rx-template-treatment-list p {
+  margin: 3px 0 0;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.rx-template-treatment-list small {
+  display: block;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.rx-template-treatment-list em {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.rx-template-empty {
+  padding: 18px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  color: #64748b;
+  text-align: center;
+}
+
+.rx-template-note {
+  min-height: 56px;
+  padding: 10px;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  background: #fffbeb;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.rx-template-follow {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 0.55fr 0.65fr 1.8fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.rx-template-footer {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 24px;
+  align-items: end;
+  margin-top: 20px;
+}
+
+.rx-sign-line {
+  height: 1px;
+  background: #0f172a;
+  margin-bottom: 7px;
+}
+
+.rx-template-footer strong {
+  display: block;
+  text-align: center;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 950;
+}
+
+.rx-template-footer p {
+  margin: 0;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.35;
+  text-align: right;
+}
+
+@media (max-width: 1280px) {
+  .rx-hero__top,
+  .rx-patient-panel,
+  .rx-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rx-date-card {
+    width: fit-content;
+    min-width: min(100%, 280px);
+  }
+
+  .rx-patient-info {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .rx-builder-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .rx-field-medicine {
+    grid-column: span 2;
+  }
+
+  .rx-field-notes {
+    grid-column: span 3;
+  }
+}
+
+@media (max-width: 768px) {
+  .receta-page {
+    padding: 10px;
+  }
+
+  .rx-main {
+    border-radius: 22px;
+  }
+
+  .rx-hero {
+    padding: 14px;
+  }
+
+  .rx-hero__top {
+    grid-template-columns: 1fr;
+  }
+
+  .rx-back-btn,
+  .rx-date-card {
+    width: 100%;
+  }
+
+  .rx-title-block h2.ant-typography {
+    font-size: 28px;
+  }
+
+  .rx-patient-panel,
+  .rx-patient-info,
+  .rx-vitals-grid,
+  .rx-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rx-content-grid {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .rx-card {
+    border-radius: 20px;
+    padding: 15px;
+  }
+
+  .rx-card-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .rx-builder-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rx-field-medicine,
+  .rx-field-notes,
+  .rx-add-treatment-btn {
+    grid-column: 1 / -1;
+  }
+
+  .rx-treatment-table {
+    display: none;
+  }
+
+  .rx-treatment-cards {
+    display: grid;
+    gap: 12px;
+  }
+
+  .rx-follow-card,
+  .rx-actions {
+    margin: 0 12px 12px;
+  }
+
+  .rx-actions {
+    position: static;
+  }
+
+  .rx-actions .ant-space,
+  .rx-actions .ant-space-item,
+  .rx-actions .ant-btn {
+    width: 100%;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 297mm;
+    height: 210mm;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .rx-print-only,
+  .rx-print-only * {
+    visibility: visible !important;
+  }
+
+  .rx-print-only {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    width: 297mm;
+    height: 210mm;
+    overflow: hidden !important;
+    background: #fff;
+  }
+
+  .rx-print-template {
+    width: 277mm;
+    height: 190mm;
+    min-height: 190mm;
+    max-height: 190mm;
+    margin: 0 auto !important;
+    padding: 8mm 10mm;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+    page-break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-before: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .rx-preview-modal,
+  .rx-main,
+  .ant-modal-root,
+  .ant-message {
+    display: none !important;
+  }
+}

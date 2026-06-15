@@ -52,7 +52,6 @@ const Login: React.FC = () => {
       backendMessage.includes('password') ||
       backendMessage.includes('credenciales')
     ) {
-      // return 'La contraseña es incorrecta';
       return 'Datos de acceso incorrectos. Verifica tu correo y contraseña';
     }
 
@@ -63,11 +62,27 @@ const Login: React.FC = () => {
     return 'No fue posible iniciar sesión. Intente nuevamente';
   };
 
+  const getRedirectByRole = (rolId?: number) => {
+    switch (Number(rolId)) {
+      case 1:
+        return '/dashboard';
+
+      case 2:
+        return '/dashboard-medico';
+
+      case 3:
+        return '/dashboard-consultor';
+
+      default:
+        return '/dashboard';
+    }
+  };
+
   const onFinish = async (values: LoginFormValues) => {
     setLoading(true);
 
     try {
-      await login(values.email, values.password);
+      const loginResponse = await login(values.email, values.password);
 
       if (values.remember) {
         localStorage.setItem('remember_me', 'true');
@@ -77,7 +92,11 @@ const Login: React.FC = () => {
         localStorage.removeItem('remembered_email');
       }
 
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const user = JSON.parse(
+        localStorage.getItem('user') || '{}'
+      );
+
+      const redirectPath = getRedirectByRole(user?.rol_id);
 
       message.success({
         content: user?.nombre
@@ -86,8 +105,10 @@ const Login: React.FC = () => {
         duration: 3,
       });
 
-      navigate('/dashboard');
+      navigate(redirectPath, { replace: true });
     } catch (error: any) {
+      console.error('ERROR LOGIN:', error);
+
       message.error({
         content: getErrorMessage(error),
         duration: 4,
